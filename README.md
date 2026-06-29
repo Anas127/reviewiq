@@ -4,7 +4,7 @@ AI-powered code review interview trainer for software engineers.
 
 Practice catching bugs in real PR-style diffs. Write your review like a senior engineer would. Get graded against ground truth — see exactly what you caught, what you missed, and how a stronger reviewer would have approached it.
 
-**Live:** [reviewiq.dev](https://reviewiq.dev)
+**Live:** [reviewiq-ruby.vercel.app](https://reviewiq-ruby.vercel.app)
 
 ---
 
