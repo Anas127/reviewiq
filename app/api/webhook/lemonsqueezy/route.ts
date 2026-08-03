@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 // Use service role to bypass RLS
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export async function POST(req: Request) {
@@ -38,7 +38,8 @@ export async function POST(req: Request) {
 
   // Get user email from order
   const email = order?.user_email;
-  const productName = payload.data?.attributes?.first_order_item?.product_name ?? "";
+  const productName =
+    payload.data?.attributes?.first_order_item?.product_name ?? "";
 
   // Determine credits to add
   const creditsToAdd = productName.includes("30") ? 30 : 10;
