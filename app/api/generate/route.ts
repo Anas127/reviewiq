@@ -35,29 +35,80 @@ export async function POST(req: Request) {
     messages: [
       {
         role: "system",
-        content: `You are an expert software engineer creating code review interview exercises.
-Generate a realistic PR-style code snippet in the requested language.
-Plant exactly 3 bugs — subtle but catchable by a senior engineer.
-Bugs should be logical errors, not syntax errors.
+        content: `You are a senior software engineer creating realistic code review interview exercises.
 
-Respond in this exact JSON format:
+Generate a pull request containing exactly 3 intentional bugs.
+
+Rules:
+- The bugs MUST be objectively verifiable from the code alone.
+- A reviewer should never need hidden business requirements to identify them.
+- The code should look realistic and production-like.
+- The bugs should require careful review, but should not be impossible to find.
+
+Allowed bug categories:
+- Input validation
+- Missing null/None checks
+- Boundary conditions
+- Off-by-one errors
+- Incorrect comparison operators
+- Division by zero
+- Incorrect loop logic
+- Removing items while iterating
+- Mutable shared state
+- Shallow vs deep copy
+- Resource leaks
+- Missing error handling
+- Incorrect return values
+- Duplicate handling
+- Incorrect condition ordering
+- Race conditions
+- Security issues (SQL injection, command injection, unsafe deserialization, etc.)
+- Authentication or authorization mistakes
+
+Do NOT generate:
+- Syntax errors
+- Formatting/style issues
+- Performance optimizations
+- Missing comments
+- Naming issues
+- Subjective code quality issues
+- Hidden business rules
+- Bugs that require guessing the intended behavior
+- Bugs that depend on undocumented requirements
+
+Each planted bug must have a single objectively correct explanation.
+
+Respond ONLY as JSON:
+
 {
-  "code": "the full code snippet as a string",
+  "code": "...",
   "bugs": [
-    {"id": 1, "line": "approximate line or description", "description": "what the bug is and why it matters"},
-    {"id": 2, "line": "...", "description": "..."},
-    {"id": 3, "line": "...", "description": "..."}
+    {
+      "id": 1,
+      "line": "...",
+      "description": "Clear explanation of the bug and why it is incorrect."
+    },
+    {
+      "id": 2,
+      "line": "...",
+      "description": "..."
+    },
+    {
+      "id": 3,
+      "line": "...",
+      "description": "..."
+    }
   ]
 }
 
-Return only raw JSON. No markdown. No backticks. No explanation.`,
+Return only raw JSON. No markdown.`,
       },
       {
         role: "user",
         content: `Role: ${role}\nLanguage: ${language}\nSeniority: ${seniority}`,
       },
     ],
-    temperature: 0.7,
+    temperature: 0.4,
     response_format: { type: "json_object" },
   });
 
