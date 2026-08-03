@@ -103,6 +103,22 @@ create table reviews (
   feedback text not null,
   created_at timestamp with time zone default timezone('utc', now())
 );
+<<<<<<< HEAD
+
+-- pending/generated exercises; bugs stay server-side until grading is complete
+create table review_exercises (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  role text,
+  language text,
+  seniority text,
+  code text not null,
+  bugs jsonb not null,
+  graded_at timestamp with time zone,
+  created_at timestamp with time zone default timezone('utc', now())
+);
+=======
+>>>>>>> origin/main
 ```
 
 ---

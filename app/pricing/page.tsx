@@ -37,16 +37,25 @@ const PACKS = [
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-[#0f0f0f] text-white flex flex-col">
+<<<<<<< HEAD
+      <nav className="border-b border-[#252525] px-4 sm:px-8 min-h-16 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 bg-[#0f0f0f]/80 backdrop-blur-sm z-10">
+        <div className="flex items-center gap-4 sm:gap-8">
+=======
       {/* NAV */}
       <nav className="border-b border-[#252525] px-8 h-16 flex items-center justify-between sticky top-0 bg-[#0f0f0f]/80 backdrop-blur-sm z-10">
         <div className="flex items-center gap-8">
+>>>>>>> origin/main
           <Link
             href="/"
             className="text-[18px] font-black tracking-[-0.5px] text-white"
           >
             Review<span className="text-indigo-400">IQ</span>
           </Link>
+<<<<<<< HEAD
+          <div className="hidden sm:flex items-center gap-1">
+=======
           <div className="flex items-center gap-1">
+>>>>>>> origin/main
             {[
               { label: "Product", href: "/" },
               { label: "Pricing", href: "/pricing" },
@@ -66,7 +75,11 @@ export default function PricingPage() {
             ))}
           </div>
         </div>
+<<<<<<< HEAD
+        <div className="flex items-center gap-2 sm:gap-3">
+=======
         <div className="flex items-center gap-3">
+>>>>>>> origin/main
           <Link
             href="/login"
             className="text-[13px] font-semibold text-[#777] hover:text-white transition-colors px-3 py-1.5"
@@ -82,13 +95,21 @@ export default function PricingPage() {
         </div>
       </nav>
 
+<<<<<<< HEAD
+      <div className="text-center px-4 pt-16 sm:pt-24 pb-12 sm:pb-16">
+=======
       {/* HEADER */}
       <div className="text-center px-4 pt-24 pb-16">
+>>>>>>> origin/main
         <p className="text-[11px] font-bold text-[#444] uppercase tracking-widest mb-4">
           Pricing
         </p>
         <h1
+<<<<<<< HEAD
+          className="text-[34px] sm:text-[48px] font-black tracking-tight leading-tight mb-4"
+=======
           className="text-[48px] font-black tracking-tight leading-tight mb-4"
+>>>>>>> origin/main
           style={{
             background: "linear-gradient(180deg, #ffffff 0%, #888 100%)",
             WebkitBackgroundClip: "text",
@@ -105,12 +126,20 @@ export default function PricingPage() {
         </p>
       </div>
 
+<<<<<<< HEAD
+      <div className="flex flex-col md:flex-row items-center justify-center gap-6 px-4 sm:px-8 pb-20 sm:pb-24">
+        {PACKS.map((pack) => (
+          <div
+            key={pack.name}
+            className={`w-full max-w-80 rounded-xl border p-6 sm:p-8 flex flex-col gap-6 relative ${
+=======
       {/* CARDS */}
       <div className="flex justify-center gap-6 px-8 pb-24">
         {PACKS.map((pack) => (
           <div
             key={pack.name}
             className={`w-80 rounded-xl border p-8 flex flex-col gap-6 relative ${
+>>>>>>> origin/main
               pack.highlight
                 ? "border-white/20 bg-[#141414]"
                 : "border-[#222] bg-[#0f0f0f]"
@@ -162,8 +191,12 @@ export default function PricingPage() {
         ))}
       </div>
 
+<<<<<<< HEAD
+      <div className="border-t border-[#1a1a1a] px-4 sm:px-8 py-16 sm:py-20 max-w-2xl mx-auto w-full">
+=======
       {/* FAQ */}
       <div className="border-t border-[#1a1a1a] px-8 py-20 max-w-2xl mx-auto w-full">
+>>>>>>> origin/main
         <p className="text-[11px] font-bold text-[#333] uppercase tracking-widest mb-10 text-center">
           Common questions
         </p>
@@ -194,7 +227,10 @@ export default function PricingPage() {
         </div>
       </div>
 
+<<<<<<< HEAD
+=======
       {/* FOOTER */}
+>>>>>>> origin/main
       <div className="border-t border-[#1a1a1a] px-8 py-6 flex items-center justify-between">
         <span className="text-[22px] font-black tracking-tight text-[#222]">
           ReviewIQ

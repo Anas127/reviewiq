@@ -21,6 +21,10 @@ type Grade = {
   caught: number[];
   missed: number[];
   feedback: string;
+<<<<<<< HEAD
+  bugs: Bug[];
+=======
+>>>>>>> origin/main
 };
 type Session = {
   id: string;
@@ -34,8 +38,13 @@ export default function ReviewPage() {
   const [role, setRole] = useState(ROLES[0]);
   const [language, setLanguage] = useState(LANGUAGES[0]);
   const [seniority, setSeniority] = useState(SENIORITIES[1]);
+<<<<<<< HEAD
+  const [exerciseId, setExerciseId] = useState("");
+  const [code, setCode] = useState("");
+=======
   const [code, setCode] = useState("");
   const [bugs, setBugs] = useState<Bug[]>([]);
+>>>>>>> origin/main
   const [userReview, setUserReview] = useState("");
   const [grade, setGrade] = useState<Grade | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -62,8 +71,13 @@ export default function ReviewPage() {
     setGenerating(true);
     setGrade(null);
     setUserReview("");
+<<<<<<< HEAD
+    setExerciseId("");
+    setCode("");
+=======
     setCode("");
     setBugs([]);
+>>>>>>> origin/main
     setGenerateError("");
 
     const res = await fetch("/api/generate", {
@@ -79,18 +93,46 @@ export default function ReviewPage() {
     }
 
     const data = await res.json();
+<<<<<<< HEAD
+    if (!res.ok) {
+      setGenerateError(data.error ?? "Could not generate a review.");
+      setGenerating(false);
+      return;
+    }
+
+    setExerciseId(data.exerciseId);
+    setCode(data.code);
+=======
     setCode(data.code);
     setBugs(data.bugs);
+>>>>>>> origin/main
     setGenerating(false);
   }
 
   async function handleGrade() {
+<<<<<<< HEAD
+    if (!userReview.trim() || !exerciseId) return;
+=======
     if (!userReview.trim()) return;
+>>>>>>> origin/main
     setGrading(true);
     const res = await fetch("/api/grade", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+<<<<<<< HEAD
+        exerciseId,
+        userReview,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setGenerateError(data.error ?? "Could not grade your review.");
+      setGrading(false);
+      return;
+    }
+
+=======
         code,
         bugs,
         userReview,
@@ -100,6 +142,7 @@ export default function ReviewPage() {
       }),
     });
     const data = await res.json();
+>>>>>>> origin/main
     setGrade(data);
     const title =
       code
@@ -126,19 +169,28 @@ export default function ReviewPage() {
 
   return (
     <div className="h-screen bg-[#0f0f0f] text-white flex flex-col overflow-hidden">
+<<<<<<< HEAD
+      <nav className="border-b border-[#252525] px-8 h-16 flex items-center justify-between flex-shrink-0 bg-[#0f0f0f]">
+        <div className="flex items-center gap-8">
+=======
       {/* NAV */}
       <nav className="border-b border-[#252525] px-8 h-16 flex items-center justify-between flex-shrink-0 bg-[#0f0f0f]">
         <div className="flex items-center gap-8">
           {/* LOGO — big, bold, dominant */}
+>>>>>>> origin/main
           <Link
             href="/"
             className="text-[18px] font-black tracking-[-0.5px] text-white"
           >
             Review<span className="text-indigo-400">IQ</span>
           </Link>
+<<<<<<< HEAD
+          <div className="w-px h-5 bg-[#2a2a2a]" />
+=======
           {/* DIVIDER */}
           <div className="w-px h-5 bg-[#2a2a2a]" />
           {/* NAV LINKS — clearly readable, not timid */}
+>>>>>>> origin/main
           <div className="flex items-center gap-1">
             {[
               { label: "Review", href: "/review" },
@@ -186,9 +238,13 @@ export default function ReviewPage() {
         </div>
       </nav>
 
+<<<<<<< HEAD
+      <div className="flex flex-1 overflow-hidden">
+=======
       {/* BODY */}
       <div className="flex flex-1 overflow-hidden">
         {/* SIDEBAR */}
+>>>>>>> origin/main
         <div className="w-60 border-r border-[#222] flex flex-col flex-shrink-0 overflow-y-auto bg-[#0f0f0f]">
           <div className="p-4 space-y-4">
             <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest">
@@ -266,9 +322,13 @@ export default function ReviewPage() {
           )}
         </div>
 
+<<<<<<< HEAD
+        <div className="flex flex-1 overflow-hidden">
+=======
         {/* MAIN */}
         <div className="flex flex-1 overflow-hidden">
           {/* CODE PANEL */}
+>>>>>>> origin/main
           <div className="flex-1 flex flex-col border-r border-[#222] overflow-hidden">
             <div className="h-10 border-b border-[#222] px-5 flex items-center justify-between flex-shrink-0 bg-[#0f0f0f]">
               <span className="text-[10px] font-bold text-[#444] uppercase tracking-widest">
@@ -295,7 +355,11 @@ export default function ReviewPage() {
                           Out of reviews
                         </p>
                         <p className="text-[#555] text-[12px] leading-relaxed mb-6 max-w-[200px] mx-auto">
+<<<<<<< HEAD
+                          You&apos;ve used all your credits. Buy a pack to keep
+=======
                           You've used all your credits. Buy a pack to keep
+>>>>>>> origin/main
                           going.
                         </p>
                         <button
@@ -377,9 +441,13 @@ export default function ReviewPage() {
             </div>
           </div>
 
+<<<<<<< HEAD
+          <div className="w-[420px] flex flex-col flex-shrink-0 overflow-hidden bg-[#0f0f0f]">
+=======
           {/* RIGHT PANEL */}
           <div className="w-[420px] flex flex-col flex-shrink-0 overflow-hidden bg-[#0f0f0f]">
             {/* REVIEW INPUT */}
+>>>>>>> origin/main
             <div className="border-b border-[#222] p-5 flex-shrink-0">
               <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
                 Your Review
@@ -406,7 +474,10 @@ export default function ReviewPage() {
               </div>
             </div>
 
+<<<<<<< HEAD
+=======
             {/* RESULT */}
+>>>>>>> origin/main
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
               {!grade && (
                 <div className="h-full flex items-center justify-center">
@@ -435,7 +506,11 @@ export default function ReviewPage() {
                       </span>
                     </div>
                     <p className="text-[12px] text-[#555] mt-1">
+<<<<<<< HEAD
+                      {grade.caught.length} of {grade.bugs.length} bugs caught
+=======
                       {grade.caught.length} of {bugs.length} bugs caught
+>>>>>>> origin/main
                     </p>
                     <div className="h-[2px] bg-[#1f1f1f] rounded-full mt-3">
                       <div
@@ -450,7 +525,11 @@ export default function ReviewPage() {
                       Bug Breakdown
                     </p>
                     <div className="space-y-2">
+<<<<<<< HEAD
+                      {grade.bugs.map((bug) => {
+=======
                       {bugs.map((bug) => {
+>>>>>>> origin/main
                         const caught = grade.caught.includes(bug.id);
                         return (
                           <div

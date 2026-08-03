@@ -7,14 +7,20 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export async function POST(req: Request) {
   const supabase = await createClient();
 
+<<<<<<< HEAD
+=======
   // Get current user
+>>>>>>> origin/main
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+<<<<<<< HEAD
+=======
   // Check credits
+>>>>>>> origin/main
   const { data: profile } = await supabase
     .from("profiles")
     .select("credits")
@@ -62,5 +68,30 @@ Return only raw JSON. No markdown. No backticks. No explanation.`,
   });
 
   const data = JSON.parse(response.choices[0].message.content!);
+<<<<<<< HEAD
+
+  const { data: exercise, error: exerciseError } = await supabase
+    .from("review_exercises")
+    .insert({
+      user_id: user.id,
+      role,
+      language,
+      seniority,
+      code: data.code,
+      bugs: data.bugs,
+    })
+    .select("id")
+    .single();
+
+  if (exerciseError || !exercise) {
+    return NextResponse.json(
+      { error: "Failed to save exercise" },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ exerciseId: exercise.id, code: data.code });
+=======
   return NextResponse.json(data);
+>>>>>>> origin/main
 }

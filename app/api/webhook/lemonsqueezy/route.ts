@@ -2,6 +2,39 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
+<<<<<<< HEAD
+export async function POST(req: Request) {
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-signature");
+  const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!signature || !webhookSecret || !supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 500 },
+    );
+  }
+
+  const hmac = crypto
+    .createHmac("sha256", webhookSecret)
+    .update(rawBody)
+    .digest("hex");
+
+  const expected = Buffer.from(hmac, "hex");
+  const actual = Buffer.from(signature, "hex");
+
+  if (
+    expected.length !== actual.length ||
+    !crypto.timingSafeEqual(expected, actual)
+  ) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+=======
 // Use service role to bypass RLS
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +55,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+>>>>>>> origin/main
   const payload = JSON.parse(rawBody);
   const eventName = payload.meta?.event_name;
 
@@ -36,6 +70,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   }
 
+<<<<<<< HEAD
+  const email = order?.user_email;
+  const productName =
+    payload.data?.attributes?.first_order_item?.product_name ?? "";
+
+  const creditsToAdd = productName.includes("30") ? 30 : 10;
+
+=======
   // Get user email from order
   const email = order?.user_email;
   const productName = payload.data?.attributes?.first_order_item?.product_name ?? "";
@@ -44,6 +86,7 @@ export async function POST(req: Request) {
   const creditsToAdd = productName.includes("30") ? 30 : 10;
 
   // Find user by email and add credits
+>>>>>>> origin/main
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, credits")
@@ -60,4 +103,8 @@ export async function POST(req: Request) {
     .eq("id", profile.id);
 
   return NextResponse.json({ received: true });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

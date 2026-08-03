@@ -13,8 +13,49 @@ export async function POST(req: Request) {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+<<<<<<< HEAD
+  const { exerciseId, userReview } = await req.json();
+
+  if (!exerciseId || !userReview?.trim()) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("credits")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.credits < 1) {
+    return NextResponse.json(
+      { error: "No credits remaining" },
+      { status: 402 },
+    );
+  }
+
+  const { data: exercise, error: exerciseError } = await supabase
+    .from("review_exercises")
+    .select("id, role, language, seniority, code, bugs, graded_at")
+    .eq("id", exerciseId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (exerciseError || !exercise) {
+    return NextResponse.json({ error: "Exercise not found" }, { status: 404 });
+  }
+
+  if (exercise.graded_at) {
+    return NextResponse.json(
+      { error: "Exercise already graded" },
+      { status: 409 },
+    );
+  }
+
+  const bugs = exercise.bugs as { id: number; description: string }[];
+=======
   const { code, bugs, userReview, role, language, seniority } =
     await req.json();
+>>>>>>> origin/main
 
   const bugsStr = bugs
     .map(
@@ -50,7 +91,11 @@ Return only raw JSON. No markdown. No backticks. No explanation.`,
       },
       {
         role: "user",
+<<<<<<< HEAD
+        content: `CODE:\n${exercise.code}\n\nPLANTED BUGS:\n${bugsStr}\n\nCANDIDATE REVIEW:\n${userReview}`,
+=======
         content: `CODE:\n${code}\n\nPLANTED BUGS:\n${bugsStr}\n\nCANDIDATE REVIEW:\n${userReview}`,
+>>>>>>> origin/main
       },
     ],
     temperature: 0.2,
@@ -59,6 +104,22 @@ Return only raw JSON. No markdown. No backticks. No explanation.`,
 
   const data = JSON.parse(response.choices[0].message.content!);
 
+<<<<<<< HEAD
+  const { error: decrementError } = await supabase.rpc("decrement_credits");
+  if (decrementError) {
+    return NextResponse.json(
+      { error: "Failed to deduct credits" },
+      { status: 500 },
+    );
+  }
+
+  const { error: insertError } = await supabase.from("reviews").insert({
+    user_id: user.id,
+    role: exercise.role ?? "",
+    language: exercise.language ?? "",
+    seniority: exercise.seniority ?? "",
+    code: exercise.code,
+=======
   await supabase.rpc("decrement_credits");
 
   await supabase.from("reviews").insert({
@@ -67,6 +128,7 @@ Return only raw JSON. No markdown. No backticks. No explanation.`,
     language: language ?? "",
     seniority: seniority ?? "",
     code,
+>>>>>>> origin/main
     bugs,
     user_review: userReview,
     score: data.score,
@@ -75,5 +137,21 @@ Return only raw JSON. No markdown. No backticks. No explanation.`,
     feedback: data.feedback,
   });
 
+<<<<<<< HEAD
+  if (insertError) {
+    return NextResponse.json(
+      { error: "Failed to save review" },
+      { status: 500 },
+    );
+  }
+
+  await supabase
+    .from("review_exercises")
+    .update({ graded_at: new Date().toISOString() })
+    .eq("id", exercise.id);
+
+  return NextResponse.json({ ...data, bugs });
+=======
   return NextResponse.json(data);
+>>>>>>> origin/main
 }
