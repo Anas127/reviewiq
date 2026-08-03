@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
+<<<<<<< HEAD
 export async function POST(req: Request) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-signature");
@@ -33,6 +34,28 @@ export async function POST(req: Request) {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+=======
+// Use service role to bypass RLS
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(req: Request) {
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-signature");
+
+  // Verify webhook signature
+  const hmac = crypto
+    .createHmac("sha256", process.env.LEMONSQUEEZY_WEBHOOK_SECRET!)
+    .update(rawBody)
+    .digest("hex");
+
+  if (hmac !== signature) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+>>>>>>> origin/main
   const payload = JSON.parse(rawBody);
   const eventName = payload.meta?.event_name;
 
@@ -47,12 +70,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   }
 
+<<<<<<< HEAD
   const email = order?.user_email;
   const productName =
     payload.data?.attributes?.first_order_item?.product_name ?? "";
 
   const creditsToAdd = productName.includes("30") ? 30 : 10;
 
+=======
+  // Get user email from order
+  const email = order?.user_email;
+  const productName = payload.data?.attributes?.first_order_item?.product_name ?? "";
+
+  // Determine credits to add
+  const creditsToAdd = productName.includes("30") ? 30 : 10;
+
+  // Find user by email and add credits
+>>>>>>> origin/main
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, credits")
@@ -69,4 +103,8 @@ export async function POST(req: Request) {
     .eq("id", profile.id);
 
   return NextResponse.json({ received: true });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main
