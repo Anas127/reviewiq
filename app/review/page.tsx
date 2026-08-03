@@ -18,8 +18,16 @@ const SENIORITIES = ["Junior", "Mid-level", "Senior"];
 type Bug = { id: number; line: string; description: string };
 type Grade = {
   score: number;
-  caught: number[];
-  missed: number[];
+  caught: {
+    bug: number;
+    reason: string;
+  }[];
+  missed: {
+    bug: number;
+    description: string;
+    reason: string;
+  }[];
+  extraFindings: string[];
   feedback: string;
 };
 type Session = {
@@ -451,7 +459,9 @@ export default function ReviewPage() {
                     </p>
                     <div className="space-y-2">
                       {bugs.map((bug) => {
-                        const caught = grade.caught.includes(bug.id);
+                        const caught = grade.caught.some(
+                          (b) => b.bug === bug.id,
+                        );
                         return (
                           <div
                             key={bug.id}
@@ -469,7 +479,11 @@ export default function ReviewPage() {
                                 Bug {bug.id} — {caught ? "Caught" : "Missed"}
                               </p>
                               <p className="text-[11px] text-[#71717a] leading-relaxed">
-                                {bug.description}
+                                {caught
+                                  ? grade.caught.find((b) => b.bug === bug.id)
+                                      ?.reason
+                                  : grade.missed.find((b) => b.bug === bug.id)
+                                      ?.reason}
                               </p>
                             </div>
                           </div>
