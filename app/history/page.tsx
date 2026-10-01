@@ -10,8 +10,11 @@ type Review = {
   language: string;
   seniority: string;
   score: number;
-  caught: number[];
-  missed: number[];
+  caught: (number | { bug: number; reason: string })[];
+  missed: (
+    | number
+    | { bug: number; description: string; reason: string }
+  )[];
   feedback: string;
   bugs: { id: number; description: string }[];
   user_review: string;
@@ -62,9 +65,9 @@ export default function HistoryPage() {
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="text-[18px] font-black tracking-[-0.5px] text-white"
+            className="text-[21px] font-extrabold tracking-[-1.1px] text-[#f4f5f6]"
           >
-            Review<span className="text-indigo-400">IQ</span>
+            Review<span className="text-[#ff765f]">IQ</span>
           </Link>
           <div className="flex items-center gap-1">
             {[
@@ -230,7 +233,9 @@ export default function HistoryPage() {
                 </p>
                 <div className="space-y-2">
                   {selected.bugs.map((bug) => {
-                    const caught = selected.caught.includes(bug.id);
+                    const caught = selected.caught.some((item) =>
+                      typeof item === "number" ? item === bug.id : item.bug === bug.id,
+                    );
                     return (
                       <div
                         key={bug.id}

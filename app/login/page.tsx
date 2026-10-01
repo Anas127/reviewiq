@@ -52,7 +52,7 @@ export default function LoginPage() {
           href="/"
           className="text-[22px] font-black tracking-tight text-white"
         >
-          ReviewIQ
+          Review<span className="text-[#ff765f]">IQ</span>
         </Link>
         <span className="text-[12px] text-[#555]">
           {isSignUp ? "Already have an account?" : "No account yet?"}{" "}

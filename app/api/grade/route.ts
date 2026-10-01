@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
+import { openExercise } from "@/lib/exercise-token";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -13,8 +14,20 @@ export async function POST(req: Request) {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { code, bugs, userReview, role, language, seniority } =
-    await req.json();
+  const { exerciseToken, userReview } = await req.json();
+  if (typeof exerciseToken !== "string" || typeof userReview !== "string") {
+    return NextResponse.json({ error: "Invalid submission" }, { status: 400 });
+  }
+
+  const exercise = openExercise(exerciseToken, user.id);
+  if (!exercise) {
+    return NextResponse.json(
+      { error: "Exercise is invalid or expired. Generate a new one." },
+      { status: 400 },
+    );
+  }
+
+  const { code, bugs, role, language, seniority } = exercise;
 
   const bugsStr = bugs
     .map(
@@ -101,9 +114,9 @@ ${userReview}`,
 
   await supabase.from("reviews").insert({
     user_id: user.id,
-    role: role ?? "",
-    language: language ?? "",
-    seniority: seniority ?? "",
+    role,
+    language,
+    seniority,
     code,
     bugs,
     user_review: userReview,
@@ -113,5 +126,5 @@ ${userReview}`,
     feedback: data.feedback,
   });
 
-  return NextResponse.json(data);
+  return NextResponse.json({ ...data, bugs });
 }

@@ -1,21 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { createClient } from "@/lib/supabase/client";
 
-const ROLES = [
-  "Backend Engineer",
-  "Frontend Engineer",
-  "Full Stack Engineer",
-  "Data Engineer",
-];
+const ROLES = ["Backend Engineer", "Frontend Engineer", "Full Stack Engineer", "Data Engineer"];
 const LANGUAGES = ["Python", "TypeScript", "JavaScript", "Java", "Go"];
 const SENIORITIES = ["Junior", "Mid-level", "Senior"];
 
-type Bug = { id: number; line: string; description: string };
 type Grade = {
   score: number;
   caught: {
@@ -29,13 +23,7 @@ type Grade = {
   }[];
   extraFindings: string[];
   feedback: string;
-};
-type Session = {
-  id: string;
-  title: string;
-  language: string;
-  seniority: string;
-  score: number;
+  bugs: { id: number; description: string }[];
 };
 
 export default function ReviewPage() {
@@ -43,27 +31,22 @@ export default function ReviewPage() {
   const [language, setLanguage] = useState(LANGUAGES[0]);
   const [seniority, setSeniority] = useState(SENIORITIES[1]);
   const [code, setCode] = useState("");
-  const [bugs, setBugs] = useState<Bug[]>([]);
+  const [exerciseToken, setExerciseToken] = useState("");
   const [userReview, setUserReview] = useState("");
   const [grade, setGrade] = useState<Grade | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [generating, setGenerating] = useState(false);
   const [grading, setGrading] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const [generateError, setGenerateError] = useState("");
+  const [gradeError, setGradeError] = useState("");
 
   useEffect(() => {
-    fetch("/api/credits")
-      .then((r) => r.json())
-      .then((d) => setCredits(d.credits));
+    fetch("/api/credits").then((response) => response.json()).then((data) => setCredits(data.credits));
   }, [grade]);
 
   function handleBuyCredits(pack: "10" | "30") {
-    const url =
-      pack === "10"
-        ? process.env.NEXT_PUBLIC_LS_10_REVIEWS_URL
-        : process.env.NEXT_PUBLIC_LS_30_REVIEWS_URL;
-    window.open(url, "_blank");
+    const url = pack === "10" ? process.env.NEXT_PUBLIC_LS_10_REVIEWS_URL : process.env.NEXT_PUBLIC_LS_30_REVIEWS_URL;
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 
   async function handleGenerate() {
@@ -71,441 +54,145 @@ export default function ReviewPage() {
     setGrade(null);
     setUserReview("");
     setCode("");
-    setBugs([]);
+    setExerciseToken("");
     setGenerateError("");
-
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, language, seniority }),
-    });
-
-    if (res.status === 402) {
-      setGenerateError("No credits left.");
+    setGradeError("");
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, language, seniority }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setGenerateError(response.status === 402 ? "No credits left. Buy a pack to continue." : data.error ?? "Couldn't generate an exercise. Try again.");
+        return;
+      }
+      setCode(data.code);
+      setExerciseToken(data.exerciseToken);
+    } catch {
+      setGenerateError("Couldn't reach the server. Check your connection.");
+    } finally {
       setGenerating(false);
-      return;
     }
-
-    const data = await res.json();
-    setCode(data.code);
-    setBugs(data.bugs);
-    setGenerating(false);
   }
 
   async function handleGrade() {
     if (!userReview.trim()) return;
     setGrading(true);
-    const res = await fetch("/api/grade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code,
-        bugs,
-        userReview,
-        role,
-        language,
-        seniority,
-      }),
-    });
-    const data = await res.json();
-    setGrade(data);
-    const title =
-      code
-        .split("\n")
-        .find(
-          (l) =>
-            l.includes("def ") ||
-            l.includes("class ") ||
-            l.includes("function "),
-        )
-        ?.trim() ?? "Review";
-    setSessions((prev) => [
-      {
-        id: Date.now().toString(),
-        title,
-        language,
-        seniority,
-        score: data.score,
-      },
-      ...prev,
-    ]);
-    setGrading(false);
+    setGradeError("");
+    try {
+      const response = await fetch("/api/grade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exerciseToken, userReview }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setGradeError(data.error ?? "Couldn't grade this review. Try again.");
+        return;
+      }
+      setGrade(data);
+    } catch {
+      setGradeError("Couldn't reach the server. Check your connection.");
+    } finally {
+      setGrading(false);
+    }
   }
 
+  const syntaxLanguage = language.toLowerCase() === "typescript" ? "typescript" : language.toLowerCase() === "javascript" ? "javascript" : language.toLowerCase() === "java" ? "java" : language.toLowerCase() === "go" ? "go" : "python";
+
   return (
-    <div className="h-screen bg-[#0f0f0f] text-white flex flex-col overflow-hidden">
-      {/* NAV */}
-      <nav className="border-b border-[#252525] px-8 h-16 flex items-center justify-between flex-shrink-0 bg-[#0f0f0f]">
-        <div className="flex items-center gap-8">
-          {/* LOGO — big, bold, dominant */}
-          <Link
-            href="/"
-            className="text-[18px] font-black tracking-[-0.5px] text-white"
-          >
-            Review<span className="text-indigo-400">IQ</span>
-          </Link>
-          {/* DIVIDER */}
-          <div className="w-px h-5 bg-[#2a2a2a]" />
-          {/* NAV LINKS — clearly readable, not timid */}
-          <div className="flex items-center gap-1">
-            {[
-              { label: "Review", href: "/review" },
-              { label: "History", href: "/history" },
-            ].map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className={`text-[13px] font-semibold cursor-pointer transition-all px-3 py-1.5 rounded-md ${
-                  label === "Review"
-                    ? "text-white bg-[#222]"
-                    : "text-[#777] hover:text-white hover:bg-[#1a1a1a]"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+    <div className="flex min-h-screen flex-col overflow-hidden bg-[#101418] text-[#f4f5f6] lg:h-screen lg:min-h-0">
+      <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-[#273039] bg-[#0d1115] px-5 py-3 sm:px-7">
+        <div className="flex items-center gap-7">
+          <Link href="/" className="text-[21px] font-extrabold tracking-[-1.1px] text-[#f4f5f6]">Review<span className="text-[#ff765f]">IQ</span></Link>
+          <div className="hidden h-6 w-px bg-[#303840] sm:block" />
+          <nav aria-label="Main navigation" className="flex items-center gap-1">
+            <Link href="/review" aria-current="page" className="rounded px-3 py-2 text-[13px] font-semibold text-white hover:bg-[#20262b]">Practice</Link>
+            <Link href="/history" className="rounded px-3 py-2 text-[13px] font-medium text-[#a4adb4] transition-colors hover:bg-[#20262b] hover:text-white">History</Link>
+          </nav>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 border border-[#2a2a2a] rounded-md px-3 py-2 bg-[#141414]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-            <span className="text-[12px] text-[#ccc] font-medium">
-              {credits === null
-                ? "..."
-                : `${credits} review${credits === 1 ? "" : "s"} left`}
-            </span>
-          </div>
-          <button
-            onClick={() => handleBuyCredits("10")}
-            className="bg-white text-black text-[13px] font-bold px-5 py-2 rounded-md hover:bg-[#e4e4e7] transition-colors tracking-tight"
-          >
-            Buy Credits
-          </button>
-          <button
-            onClick={async () => {
-              const supabase = createClient();
-              await supabase.auth.signOut();
-              window.location.href = "/";
-            }}
-            className="text-[13px] font-semibold text-[#555] hover:text-white transition-colors px-3 py-2"
-          >
-            Sign out
-          </button>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="hidden items-center gap-2 text-[12px] text-[#b8c0c6] sm:flex"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#ff765f]" />{credits === null ? "Loading credits" : `${credits} practice credit${credits === 1 ? "" : "s"} left`}</span>
+          <button onClick={() => handleBuyCredits("10")} className="rounded-md border border-[#48515a] px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:border-[#ff765f] hover:text-[#ff9a86]">Buy credits</button>
+          <button onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); window.location.href = "/"; }} className="rounded-md px-2 py-2 text-[12px] font-medium text-[#9ba5ad] transition-colors hover:text-white">Sign out</button>
         </div>
-      </nav>
+      </header>
 
-      {/* BODY */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* SIDEBAR */}
-        <div className="w-60 border-r border-[#222] flex flex-col flex-shrink-0 overflow-y-auto bg-[#0f0f0f]">
-          <div className="p-4 space-y-4">
-            <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest">
-              Configuration
-            </p>
-            <div className="space-y-3">
-              {[
-                { label: "Role", value: role, setter: setRole, options: ROLES },
-                {
-                  label: "Language",
-                  value: language,
-                  setter: setLanguage,
-                  options: LANGUAGES,
-                },
-                {
-                  label: "Seniority",
-                  value: seniority,
-                  setter: setSeniority,
-                  options: SENIORITIES,
-                },
-              ].map(({ label, value, setter, options }) => (
-                <div key={label}>
-                  <p className="text-[11px] font-semibold text-[#777] mb-1.5">
-                    {label}
-                  </p>
-                  <select
-                    value={value}
-                    onChange={(e) => setter(e.target.value)}
-                    className="w-full bg-[#181818] border border-[#2e2e2e] rounded-md px-3 py-2 text-[12px] text-[#e4e4e7] focus:outline-none focus:border-[#555] transition-colors appearance-none cursor-pointer"
-                  >
-                    {options.map((o) => (
-                      <option key={o}>{o}</option>
-                    ))}
-                  </select>
+      <section className="flex flex-wrap items-center justify-between gap-4 border-b border-[#273039] bg-[#14191e] px-5 py-3 sm:px-7">
+        <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
+          {[
+            { label: "Role", value: role, setter: setRole, options: ROLES },
+            { label: "Language", value: language, setter: setLanguage, options: LANGUAGES },
+            { label: "Seniority", value: seniority, setter: setSeniority, options: SENIORITIES },
+          ].map(({ label, value, setter, options }) => (
+            <label key={label} className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8d989f]">{label}</span>
+              <select value={value} onChange={(event) => setter(event.target.value)} className="min-w-32 cursor-pointer rounded border border-[#343e47] bg-[#1a2025] px-2.5 py-1.5 text-[12px] text-[#e7eaec] outline-none transition-colors focus:border-[#ff765f]">{options.map((option) => <option key={option}>{option}</option>)}</select>
+            </label>
+          ))}
+        </div>
+        <button onClick={handleGenerate} disabled={generating} className="rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] transition-colors hover:bg-[#ff927f] disabled:cursor-wait disabled:opacity-60">{generating ? "Generating exercise…" : code ? "New exercise" : "Generate exercise"}</button>
+      </section>
+
+      <main className="flex flex-1 flex-col overflow-y-auto lg:min-h-0 lg:flex-row lg:overflow-hidden">
+        <section aria-label="Code change" className="flex min-h-[420px] flex-1 flex-col border-b border-[#273039] lg:min-w-0 lg:border-b-0 lg:border-r">
+          <div className="flex min-h-14 items-center justify-between border-b border-[#273039] px-5 sm:px-7">
+            <div><p className="text-[14px] font-semibold text-[#edf0f1]">Code change</p><p className="mt-0.5 text-[11px] text-[#89949c]">Review the diff and leave clear, actionable feedback.</p></div>
+            {code && <span className="rounded border border-[#39434c] bg-[#1a2025] px-2.5 py-1 text-[11px] text-[#c5cdd2]">{language}</span>}
+          </div>
+          <div className="flex-1 overflow-auto bg-[#101418] px-4 py-5 sm:px-7">
+            {!code && !generating && <div className="flex min-h-72 flex-col items-center justify-center text-center"><p className="mb-2 text-[15px] font-semibold text-[#e7eaec]">{generateError ? "Ready when you are" : "Start a practice review"}</p><p className="max-w-sm text-[13px] leading-6 text-[#9aa4ab]">{generateError || "Choose your interview setup above, then generate a pull request to review."}</p>{!generateError && <button onClick={handleGenerate} className="mt-5 rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] hover:bg-[#ff927f]">Generate exercise</button>}</div>}
+            {generating && <div role="status" className="flex min-h-72 items-center justify-center text-[14px] text-[#abb4ba]">Preparing your exercise…</div>}
+            {code && <div className="min-w-max font-mono text-[13px] leading-7 sm:text-[14px]">{code.split("\n").map((line, index) => <div key={index} className="group flex gap-4 rounded px-1 hover:bg-white/[0.035]"><span className="w-8 flex-shrink-0 select-none text-right text-[#66717a]">{index + 1}</span><SyntaxHighlighter language={syntaxLanguage} style={vscDarkPlus} customStyle={{ background: "transparent", padding: 0, margin: 0, fontSize: "inherit", lineHeight: "inherit" }} codeTagProps={{ style: { background: "transparent" } }} PreTag="span">{line || " "}</SyntaxHighlighter></div>)}</div>}
+          </div>
+        </section>
+
+        <section aria-label="Write your review" className="flex min-h-[560px] flex-1 flex-col bg-[#13181d] lg:min-w-0">
+          <div className="border-b border-[#273039] px-5 py-5 sm:px-7"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[18px] font-bold tracking-[-0.3px] text-[#f4f5f6]">Write your code review</p><p className="mt-2 max-w-xl text-[13px] leading-5 text-[#a8b1b7]">Explain what could go wrong, why it matters, and how you would fix it.</p></div><div className="text-right text-[11px] leading-5 text-[#b2bbc0]"><p>{role}</p><p>{seniority} · {language}</p></div></div></div>
+          <textarea value={userReview} onChange={(event) => setUserReview(event.target.value.slice(0, 2000))} disabled={!code || grading || Boolean(grade)} placeholder={code ? "Share your feedback on this change…\n\nCall out specific lines, explain the impact, and suggest a fix." : "Your review editor will be ready when you generate an exercise."} className="review-textarea min-h-56 flex-1 resize-none bg-transparent px-5 py-5 text-[14px] leading-7 text-[#edf0f1] outline-none placeholder:text-[#78838b] focus:ring-0 disabled:opacity-75 sm:px-7" />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#273039] px-5 py-4 sm:px-7"><span className="text-[11px] text-[#8e999f]">{userReview.length} / 2,000 characters</span><button onClick={handleGrade} disabled={grading || !userReview.trim() || !code || Boolean(grade)} className="rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] transition-colors hover:bg-[#ff927f] disabled:cursor-not-allowed disabled:opacity-45">{grading ? "Grading review…" : "Submit review"}</button></div>
+          {gradeError && <p role="alert" className="px-5 pb-4 text-[12px] text-[#ff9a86] sm:px-7">{gradeError}</p>}
+          {grade && (
+            <div aria-live="polite" className="max-h-[42vh] space-y-5 overflow-y-auto border-t border-[#273039] px-5 py-5 sm:px-7">
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ba6ad]">Review score</p>
+                  <p className="mt-1 text-[34px] font-bold leading-none text-[#ff8b76]">{grade.score}<span className="ml-1 text-[17px] font-medium text-[#a4adb3]">/10</span></p>
                 </div>
-              ))}
-            </div>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="w-full bg-white text-black text-[13px] font-bold py-2.5 rounded-md hover:bg-[#e4e4e7] transition-colors disabled:opacity-40 tracking-tight"
-            >
-              {generating ? "Generating..." : "Generate PR →"}
-            </button>
-          </div>
-
-          {sessions.length > 0 && (
-            <div className="border-t border-[#222] p-4">
-              <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
-                Recent
-              </p>
-              <div className="space-y-1.5">
-                {sessions.map((s) => (
-                  <div
-                    key={s.id}
-                    className="p-2.5 rounded-md border border-[#222] bg-[#161616]"
-                  >
-                    <p className="text-[12px] text-[#ccc] truncate">
-                      {s.title}
-                    </p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-[11px] text-[#555]">
-                        {s.language} · {s.seniority}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${s.score >= 7 ? "bg-[#14532d] text-[#4ade80]" : "bg-[#713f12] text-[#fb923c]"}`}
-                      >
-                        {s.score}/10
-                      </span>
+                <p className="text-[12px] text-[#b8c0c5]">{grade.caught.length} of {grade.bugs.length} issues caught</p>
+              </div>
+              <div className="space-y-3">
+                {grade.bugs.map((bug) => {
+                  const caught = grade.caught.some((item) => item.bug === bug.id);
+                  const feedback = caught
+                    ? grade.caught.find((item) => item.bug === bug.id)?.reason
+                    : grade.missed.find((item) => item.bug === bug.id)?.reason;
+                  return (
+                    <div key={bug.id} className="border-l-2 border-[#43505a] pl-3">
+                      <p className={`text-[12px] font-semibold ${caught ? "text-[#a9dfbc]" : "text-[#ff9a86]"}`}>Issue {bug.id} · {caught ? "Caught" : "Missed"}</p>
+                      <p className="mt-1 text-[12px] leading-5 text-[#b1bbc1]">{feedback || bug.description}</p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+              {grade.extraFindings.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ba6ad]">Additional findings</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] leading-5 text-[#b1bbc1]">
+                    {grade.extraFindings.map((finding, index) => <li key={index}>{finding}</li>)}
+                  </ul>
+                </div>
+              )}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ba6ad]">Interviewer feedback</p>
+                <p className="mt-2 text-[13px] leading-6 text-[#d0d5d8]">{grade.feedback}</p>
               </div>
             </div>
           )}
-        </div>
-
-        {/* MAIN */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* CODE PANEL */}
-          <div className="flex-1 flex flex-col border-r border-[#222] overflow-hidden">
-            <div className="h-10 border-b border-[#222] px-5 flex items-center justify-between flex-shrink-0 bg-[#0f0f0f]">
-              <span className="text-[10px] font-bold text-[#444] uppercase tracking-widest">
-                Code Snippet
-              </span>
-              {code && (
-                <span className="text-[11px] text-[#777] border border-[#2a2a2a] px-2 py-0.5 rounded bg-[#181818]">
-                  {language}
-                </span>
-              )}
-            </div>
-            <div className="flex-1 overflow-y-auto bg-[#0a0a0a] p-5">
-              {!code && !generating && (
-                <div className="h-full flex items-center justify-center">
-                  <div className="border border-dashed border-[#252525] rounded-xl p-12 text-center max-w-sm">
-                    {generateError ? (
-                      <>
-                        <div className="w-12 h-12 rounded-full bg-[#1a0808] border border-[#7f1d1d] flex items-center justify-center mb-5 mx-auto">
-                          <span className="text-[#ef4444] text-xl font-bold">
-                            ✕
-                          </span>
-                        </div>
-                        <p className="text-white text-[15px] font-bold mb-2">
-                          Out of reviews
-                        </p>
-                        <p className="text-[#555] text-[12px] leading-relaxed mb-6 max-w-[200px] mx-auto">
-                          You've used all your credits. Buy a pack to keep
-                          going.
-                        </p>
-                        <button
-                          onClick={() => handleBuyCredits("10")}
-                          className="bg-white text-black text-[13px] font-bold px-6 py-2.5 rounded-md hover:bg-[#e4e4e7] transition-colors"
-                        >
-                          Buy Credits →
-                        </button>
-                        <p className="text-[#777] text-[12px] mt-3 font-medium">
-                          9€ for 10 reviews · 19€ for 30 reviews
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-[#2a2a2a] text-4xl mb-4 font-mono">
-                          {"{ }"}
-                        </div>
-                        <p className="text-[#555] text-sm font-semibold mb-1">
-                          No snippet generated yet
-                        </p>
-                        <p className="text-[#333] text-xs leading-relaxed">
-                          Pick your role, language, and seniority — then hit
-                          Generate PR to get a buggy diff to review.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-              {generating && (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-[#333] text-4xl font-mono mb-4">
-                      {"{ }"}
-                    </div>
-                    <p className="text-[#555] text-sm">Generating your PR...</p>
-                  </div>
-                </div>
-              )}
-              {code && (
-                <div className="text-[12px] font-mono leading-7">
-                  {code.split("\n").map((line, i) => (
-                    <div
-                      key={i}
-                      className="flex gap-4 hover:bg-[#ffffff08] rounded px-1 -mx-1 group"
-                    >
-                      <span className="text-[#2e2e2e] group-hover:text-[#444] w-6 text-right flex-shrink-0 select-none mt-0.5">
-                        {i + 1}
-                      </span>
-                      <SyntaxHighlighter
-                        language={
-                          language.toLowerCase() === "typescript"
-                            ? "typescript"
-                            : language.toLowerCase() === "javascript"
-                              ? "javascript"
-                              : language.toLowerCase() === "java"
-                                ? "java"
-                                : language.toLowerCase() === "go"
-                                  ? "go"
-                                  : "python"
-                        }
-                        style={vscDarkPlus}
-                        customStyle={{
-                          background: "transparent",
-                          padding: 0,
-                          margin: 0,
-                          fontSize: "12px",
-                          lineHeight: "1.75rem",
-                        }}
-                        codeTagProps={{ style: { background: "transparent" } }}
-                        PreTag="span"
-                      >
-                        {line}
-                      </SyntaxHighlighter>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT PANEL */}
-          <div className="w-[420px] flex flex-col flex-shrink-0 overflow-hidden bg-[#0f0f0f]">
-            {/* REVIEW INPUT */}
-            <div className="border-b border-[#222] p-5 flex-shrink-0">
-              <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
-                Your Review
-              </p>
-              <textarea
-                value={userReview}
-                onChange={(e) => setUserReview(e.target.value)}
-                disabled={!code}
-                placeholder="Describe every bug you find. Explain why it's a problem and how you'd fix it. Write like you're reviewing a teammate's PR."
-                rows={5}
-                className="review-textarea w-full bg-[#141414] border border-[#2e2e2e] rounded-md px-4 py-3 text-[12px] text-[#d4d4d8] focus:outline-none focus:border-[#555] transition-colors resize-none leading-relaxed disabled:opacity-40"
-              />
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-[11px] text-[#777]">
-                  {userReview.length} / 2000
-                </span>
-                <button
-                  onClick={handleGrade}
-                  disabled={grading || !userReview.trim() || !code}
-                  className="bg-white text-black text-[12px] font-bold px-4 py-2 rounded-md hover:bg-[#e4e4e7] transition-colors disabled:opacity-40 tracking-tight"
-                >
-                  {grading ? "Grading..." : "Submit Review →"}
-                </button>
-              </div>
-            </div>
-
-            {/* RESULT */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {!grade && (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-[#444] text-sm font-semibold mb-1">
-                      No review submitted yet
-                    </p>
-                    <p className="text-[#333] text-xs">
-                      Write your review and hit Submit.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {grade && (
-                <>
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span
-                        className={`text-[48px] font-black tracking-tight leading-none ${grade.score >= 7 ? "text-emerald-400" : grade.score >= 5 ? "text-amber-400" : "text-red-400"}`}
-                      >
-                        {grade.score}
-                      </span>
-                      <span className="text-[20px] text-[#333] font-bold">
-                        /10
-                      </span>
-                    </div>
-                    <p className="text-[12px] text-[#555] mt-1">
-                      {grade.caught.length} of {bugs.length} bugs caught
-                    </p>
-                    <div className="h-[2px] bg-[#1f1f1f] rounded-full mt-3">
-                      <div
-                        className={`h-full rounded-full transition-all ${grade.score >= 7 ? "bg-emerald-500" : grade.score >= 5 ? "bg-amber-500" : "bg-red-500"}`}
-                        style={{ width: `${(grade.score / 10) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
-                      Bug Breakdown
-                    </p>
-                    <div className="space-y-2">
-                      {bugs.map((bug) => {
-                        const caught = grade.caught.some(
-                          (b) => b.bug === bug.id,
-                        );
-                        return (
-                          <div
-                            key={bug.id}
-                            className={`rounded-lg border p-3 flex gap-3 ${caught ? "bg-emerald-500/5 border-emerald-500/20" : "bg-red-500/5 border-red-500/20"}`}
-                          >
-                            <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-0.5 ${caught ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}
-                            >
-                              {caught ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              <p
-                                className={`text-[12px] font-semibold mb-0.5 ${caught ? "text-emerald-300" : "text-red-300"}`}
-                              >
-                                Bug {bug.id} — {caught ? "Caught" : "Missed"}
-                              </p>
-                              <p className="text-[11px] text-[#71717a] leading-relaxed">
-                                {caught
-                                  ? grade.caught.find((b) => b.bug === bug.id)
-                                      ?.reason
-                                  : grade.missed.find((b) => b.bug === bug.id)
-                                      ?.reason}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="border border-[#222] rounded-md p-4 bg-[#111]">
-                    <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-2">
-                      Interviewer Feedback
-                    </p>
-                    <p className="text-[12px] text-[#777] leading-relaxed">
-                      {grade.feedback}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

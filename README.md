@@ -30,7 +30,7 @@ ReviewIQ fills that gap.
 
 ## Stack
 
-- **Frontend + API:** Next.js 15 (App Router, API Routes)
+- **Frontend + API:** Next.js 16 (App Router, API Routes)
 - **Database + Auth:** Supabase (PostgreSQL, Row Level Security)
 - **AI:** OpenAI GPT-4o (bug generation + review grading)
 - **Payments:** Lemon Squeezy (one-time credit packs)
@@ -42,8 +42,8 @@ ReviewIQ fills that gap.
 
 No separate backend. Next.js API routes handle all server-side logic:
 
-- `/api/generate` — generates a buggy code snippet, checks credits, returns code + bug list (bugs never exposed to client)
-- `/api/grade` — grades free-text review against planted bugs, deducts 1 credit, stores session
+- `/api/generate` — generates a buggy code snippet, checks credits, returns code and an encrypted exercise token; planted bugs stay server-side
+- `/api/grade` — decrypts the user-bound exercise token, grades the free-text review against the planted bugs, deducts 1 credit, and stores the session
 - `/api/credits` — returns current user credit balance
 - `/api/webhook/lemonsqueezy` — receives payment events, adds credits to user profile
 
@@ -66,6 +66,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 LEMONSQUEEZY_API_KEY=your_key
 LEMONSQUEEZY_WEBHOOK_SECRET=your_secret
+EXERCISE_TOKEN_SECRET=your_random_secret_at_least_32_characters
 NEXT_PUBLIC_LS_10_REVIEWS_URL=your_checkout_url
 NEXT_PUBLIC_LS_30_REVIEWS_URL=your_checkout_url
 ```

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
+import { sealExercise } from "@/lib/exercise-token";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -113,5 +114,14 @@ Return only raw JSON. No markdown.`,
   });
 
   const data = JSON.parse(response.choices[0].message.content!);
-  return NextResponse.json(data);
+  const exerciseToken = sealExercise({
+    userId: user.id,
+    code: data.code,
+    bugs: data.bugs,
+    role,
+    language,
+    seniority,
+  });
+
+  return NextResponse.json({ code: data.code, exerciseToken });
 }

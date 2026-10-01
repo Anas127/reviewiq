@@ -8,9 +8,9 @@ export default function Home() {
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="text-[18px] font-black tracking-[-0.5px] text-white"
+            className="text-[18px] font-black tracking-[-0.7px] text-white"
           >
-            Review<span className="text-indigo-400">IQ</span>
+            Review<span className="text-[#ff765f]">IQ</span>
           </Link>
           <div className="flex items-center gap-1">
             {[{ label: "Pricing", href: "/pricing" }].map(({ label, href }) => (
