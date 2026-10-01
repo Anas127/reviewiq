@@ -3,9 +3,12 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { sealExercise } from "@/lib/exercise-token";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 export async function POST(req: Request) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "Exercise generation is temporarily unavailable." }, { status: 503 });
+  }
+  const client = new OpenAI({ apiKey });
   const supabase = await createClient();
 
   // Get current user

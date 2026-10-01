@@ -1,346 +1,44 @@
 import Link from "next/link";
 
+const steps = [
+  ["01", "Read the change", "Work through a realistic pull request written for your role and experience level."],
+  ["02", "Write your review", "Call out concrete risks, explain the impact, and suggest a fix."],
+  ["03", "Learn from the result", "Compare your review with the planted issues and get focused interviewer feedback."],
+];
+
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#0f0f0f] text-white flex flex-col">
-      {/* NAV */}
-      <nav className="px-8 h-16 flex items-center justify-between sticky top-0 z-10 bg-[#0f0f0f]/80 backdrop-blur-sm border-b border-[#1f1f1f]">
-        <div className="flex items-center gap-8">
-          <Link
-            href="/"
-            className="text-[18px] font-black tracking-[-0.7px] text-white"
-          >
-            Review<span className="text-[#ff765f]">IQ</span>
-          </Link>
-          <div className="flex items-center gap-1">
-            {[{ label: "Pricing", href: "/pricing" }].map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className="text-[13px] font-semibold text-[#777] hover:text-white cursor-pointer transition-colors px-3 py-1.5 rounded-md hover:bg-[#1a1a1a]"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-[13px] font-semibold text-[#777] hover:text-white transition-colors px-3 py-1.5"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/login"
-            className="bg-white text-black text-[13px] font-bold px-5 py-2 rounded-md hover:bg-[#e4e4e7] transition-colors tracking-tight"
-          >
-            Get started
-          </Link>
-        </div>
+    <main className="min-h-screen overflow-hidden bg-[#101418] text-[#f4f5f6]">
+      <nav className="relative z-10 mx-auto flex h-[76px] max-w-7xl items-center justify-between px-6 lg:px-10">
+        <Link href="/" className="text-[21px] font-extrabold tracking-[-1.2px]">Review<span className="text-[#ff806a]">IQ</span></Link>
+        <div className="flex items-center gap-7 text-[13px] font-medium text-[#aab2b8]"><Link className="transition hover:text-white" href="#method">Method</Link><Link className="transition hover:text-white" href="/pricing">Pricing</Link></div>
+        <div className="flex items-center gap-4"><Link href="/login" className="hidden text-[13px] font-medium text-[#aab2b8] hover:text-white sm:block">Sign in</Link><Link href="/login" className="rounded-md bg-[#ff806a] px-4 py-2.5 text-[12px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87]">Start practicing <span aria-hidden="true">↗</span></Link></div>
       </nav>
-
-      {/* HERO */}
-      <div className="relative flex-1 flex flex-col items-center justify-center text-center px-4 py-40 overflow-hidden">
-        {/* Gradient orb top */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full opacity-20"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, #6366f1 0%, transparent 70%)",
-          }}
-        />
-        {/* Gradient orb bottom left */}
-        <div
-          className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-10"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, #22c55e 0%, transparent 70%)",
-          }}
-        />
-        {/* Gradient orb bottom right */}
-        <div
-          className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full opacity-10"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, #6366f1 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Grid texture */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 border border-[#2a2a2a] bg-[#141414] rounded-full px-4 py-1.5 text-[12px] text-[#777] mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-            Now in beta · Free to start
-          </div>
-
-          <h1
-            className="text-[64px] font-black tracking-tight leading-[1.05] mb-6 max-w-3xl"
-            style={{
-              background: "linear-gradient(180deg, #ffffff 0%, #888888 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Practice code review.
-            <br />
-            Get hired faster.
-          </h1>
-
-          <p className="text-[#666] text-[16px] max-w-md mb-10 leading-relaxed">
-            Real PR-style diffs with bugs planted by AI. Write your review. Get
-            graded against ground truth. See exactly what you missed.
-          </p>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="bg-white text-black font-bold px-7 py-3 rounded-md hover:bg-[#e4e4e7] transition-colors text-[14px] tracking-tight"
-            >
-              Start reviewing free
-            </Link>
-            <Link
-              href="#how"
-              className="text-[#666] hover:text-white text-[14px] font-semibold transition-colors px-4 py-3"
-            >
-              See how it works →
-            </Link>
-          </div>
-
-          {/* Social proof */}
-          <p className="text-[#333] text-[12px] mt-8">
-            Built for engineers prepping for senior roles
-          </p>
+      <section className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 pb-24 pt-16 lg:grid-cols-[0.92fr_1.08fr] lg:px-10 lg:pb-32 lg:pt-20">
+        <div className="pointer-events-none absolute -left-40 top-0 h-[460px] w-[460px] rounded-full bg-[#bd563e]/10 blur-[120px]" />
+        <div className="relative z-[1]">
+          <p className="mb-7 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[.24em] text-[#ff9a87]"><span className="h-px w-8 bg-[#ff806a]"/> Deliberate practice for code review</p>
+          <h1 className="max-w-[620px] text-[48px] font-semibold leading-[1.04] tracking-[-2.6px] sm:text-[64px] lg:text-[70px]">Think like the reviewer <span className="font-serif italic font-normal text-[#ff806a]">they hire.</span></h1>
+          <p className="mt-7 max-w-[490px] text-[15px] leading-7 text-[#a7b0b6]">Practice on realistic pull requests, catch the issues that matter, and get precise feedback on every review.</p>
+          <div className="mt-9 flex flex-wrap items-center gap-5"><Link href="/login" className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87]">Start with 5 free reviews <span className="ml-3">↗</span></Link><Link href="#method" className="text-[13px] font-semibold text-[#c4c9cd] hover:text-white">See the practice flow <span className="ml-1 text-[#ff806a]">↓</span></Link></div>
+          <div className="mt-12 flex items-center gap-5 border-t border-[#ffffff14] pt-5 text-[11px] text-[#929ca3]"><span><b className="mr-2 text-[#e3e6e8]">5</b> free reviews</span><span className="h-3 w-px bg-[#384047]"/><span>No card required</span><span className="h-3 w-px bg-[#384047]"/><span>Built for engineers</span></div>
         </div>
-      </div>
-
-      {/* FAKE PRODUCT SCREENSHOT */}
-      <div className="relative px-8 pb-24 flex justify-center">
-        <div className="relative w-full max-w-4xl">
-          {/* Glow under screenshot */}
-          <div
-            className="absolute -inset-4 rounded-2xl opacity-30"
-            style={{
-              background:
-                "radial-gradient(ellipse at center, #6366f1 0%, transparent 60%)",
-              filter: "blur(40px)",
-            }}
-          />
-          <div className="relative border border-[#222] rounded-xl overflow-hidden bg-[#0a0a0a]">
-            {/* Fake browser bar */}
-            <div className="border-b border-[#1f1f1f] px-4 py-3 flex items-center gap-2 bg-[#111]">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-              </div>
-              <div className="flex-1 flex justify-center">
-                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-md px-4 py-1 text-[11px] text-[#444] w-48 text-center">
-                  reviewiq.dev/review
-                </div>
-              </div>
+        <div className="relative mx-auto w-full max-w-[650px] lg:ml-auto">
+          <div className="absolute -inset-7 rounded-3xl bg-[#cf6348]/[.08] blur-3xl" />
+          <div className="relative overflow-hidden rounded-xl border border-[#ffffff1a] bg-[#151b20] shadow-[0_34px_100px_-38px_#000]">
+            <div className="flex h-12 items-center justify-between border-b border-[#ffffff12] bg-[#171e23] px-4"><div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#ff806a]"/><span className="text-[10px] font-semibold tracking-wide text-[#bbc2c7]">PRACTICE SESSION</span></div><span className="font-mono text-[10px] text-[#75818a]">REVIEW-014</span></div>
+            <div className="grid min-h-[345px] md:grid-cols-[1.05fr_.95fr]">
+              <div className="border-b border-[#ffffff12] p-5 md:border-b-0 md:border-r"><div className="mb-5 flex items-start justify-between"><div><p className="text-[11px] text-[#849099]">Pull request · user service</p><p className="mt-1 text-[14px] font-semibold">Add account lookup</p></div><span className="rounded border border-[#ff806a33] bg-[#ff806a0d] px-2 py-1 text-[9px] font-semibold text-[#ff9a87]">3 issues planted</span></div><div className="space-y-1.5 font-mono text-[10px] leading-5 sm:text-[11px]"><p className="text-[#7e8991]">{"  def find_user(email):"}</p><p className="rounded bg-[#d9664b14] px-2 text-[#d2a197]">{"-   return users[email.lower()]"}</p><p className="rounded bg-[#72bd8b12] px-2 text-[#9fc4aa]">{"+   user = users.get(email)"}</p><p className="rounded bg-[#72bd8b12] px-2 text-[#9fc4aa]">{"+   return user"}</p><p className="mt-5 text-[#78848d]">{"  def deactivate_user(user):"}</p><p className="rounded bg-[#d9664b14] px-2 text-[#d2a197]">{"-   user.active = False"}</p><p className="text-[#78848d]">{"  # ... more changes"}</p></div></div>
+              <div className="flex flex-col p-5"><div className="mb-4 flex items-center justify-between"><p className="text-[11px] font-semibold text-[#e1e5e7]">Your review</p><span className="text-[10px] text-[#75818a]">Draft</span></div><div className="flex-1 rounded-md border border-[#ffffff12] bg-[#101519] p-3 text-[11px] leading-5 text-[#9fa9af]">The lookup now uses the original email string, so addresses with different casing can fail to match. Normalize the key before calling get…<span className="animate-pulse text-[#ff806a]">|</span></div><div className="mt-4 flex items-center justify-between"><span className="text-[10px] text-[#738089]">Practice credit · 1</span><span className="rounded bg-[#ff806a] px-3 py-2 text-[10px] font-bold text-[#1d1715]">Submit review ↗</span></div></div>
             </div>
-            {/* Fake app UI */}
-            <div className="grid grid-cols-[180px_1fr_320px] h-64">
-              {/* Sidebar */}
-              <div className="border-r border-[#1f1f1f] p-4 space-y-3">
-                <div className="text-[9px] text-[#333] uppercase tracking-widest font-bold">
-                  Configuration
-                </div>
-                {["Role", "Language", "Seniority"].map((l) => (
-                  <div key={l}>
-                    <div className="text-[9px] text-[#444] mb-1">{l}</div>
-                    <div className="bg-[#141414] border border-[#222] rounded px-2 py-1.5 text-[10px] text-[#666]">
-                      {l === "Role"
-                        ? "Backend Engineer"
-                        : l === "Language"
-                          ? "Python"
-                          : "Mid-level"}
-                    </div>
-                  </div>
-                ))}
-                <div className="bg-white rounded px-2 py-1.5 text-[10px] text-black font-bold text-center">
-                  Generate PR →
-                </div>
-              </div>
-              {/* Code panel */}
-              <div className="border-r border-[#1f1f1f] p-4 bg-[#080808] font-mono text-[10px]">
-                <div className="text-[9px] text-[#333] uppercase tracking-widest mb-3">
-                  Code Snippet
-                </div>
-                {[
-                  { n: 1, code: "class UserManager:", color: "#818cf8" },
-                  { n: 2, code: "  def __init__(self):", color: "#d4d4d8" },
-                  { n: 3, code: "    self.users = []", color: "#d4d4d8" },
-                  { n: 4, code: "", color: "#d4d4d8" },
-                  {
-                    n: 5,
-                    code: "  def add_user(self, email):",
-                    color: "#d4d4d8",
-                  },
-                  {
-                    n: 6,
-                    code: "    if self._find(email):",
-                    color: "#ef4444",
-                    bug: true,
-                  },
-                  {
-                    n: 7,
-                    code: '      raise ValueError("exists")',
-                    color: "#d4d4d8",
-                  },
-                  {
-                    n: 8,
-                    code: "    self.users.append(email)",
-                    color: "#d4d4d8",
-                  },
-                ].map(({ n, code, color, bug }) => (
-                  <div
-                    key={n}
-                    className={`flex gap-3 px-1 rounded ${bug ? "bg-[#1a0808]" : ""}`}
-                  >
-                    <span className="text-[#2a2a2a] w-4 text-right flex-shrink-0">
-                      {n}
-                    </span>
-                    <span style={{ color }}>{code}</span>
-                    {bug && (
-                      <span className="text-[#ef4444] text-[8px] ml-auto self-center border border-[#7f1d1d] px-1 rounded">
-                        ⚠ Bug
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {/* Result panel */}
-              <div className="p-4 space-y-3">
-                <div className="text-[9px] text-[#333] uppercase tracking-widest">
-                  Result
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[36px] font-black text-white leading-none">
-                    7
-                  </span>
-                  <span className="text-[14px] text-[#333]">/10</span>
-                </div>
-                <div className="h-[2px] bg-[#1f1f1f] rounded-full">
-                  <div className="h-full bg-white rounded-full w-[70%]" />
-                </div>
-                <div className="space-y-1.5 pt-1">
-                  <div className="bg-[#052e16] border border-[#14532d] rounded p-2 flex gap-2">
-                    <span className="text-[#4ade80] text-[9px] font-bold">
-                      ✓
-                    </span>
-                    <span className="text-[9px] text-[#aaa]">
-                      Caught: inconsistent API interface
-                    </span>
-                  </div>
-                  <div className="bg-[#130f0e] border border-[#2a1f1a] rounded p-2 flex gap-2">
-                    <span className="text-[#a16040] text-[9px] font-bold">
-                      ✗
-                    </span>
-                    <span className="text-[9px] text-[#666]">
-                      Missed: duplicate username allowed
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="flex items-center justify-between border-t border-[#ffffff12] px-5 py-3 text-[9px] text-[#748089]"><span>Backend Engineer <span className="mx-2 text-[#3f494f]">/</span> Python <span className="mx-2 text-[#3f494f]">/</span> Senior</span><span className="tracking-[.16em]">REVIEWIQ · PRACTICE</span></div>
           </div>
+          <div className="absolute -bottom-7 -left-5 hidden rounded-lg border border-[#ffffff17] bg-[#1b2227] px-4 py-3 shadow-2xl sm:block"><p className="text-[9px] uppercase tracking-[.16em] text-[#7f8a91]">Feedback</p><p className="mt-1 text-[12px] font-semibold text-[#e4e8e9]">Specific. Actionable. Yours.</p></div>
         </div>
-      </div>
-
-      {/* HOW IT WORKS */}
-      <div id="how" className="border-t border-[#1a1a1a] px-8 py-24 relative">
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        <div className="relative max-w-3xl mx-auto">
-          <p className="text-[11px] font-bold text-[#333] uppercase tracking-widest mb-12 text-center">
-            How it works
-          </p>
-          <div className="grid grid-cols-3 gap-12">
-            {[
-              {
-                n: "01",
-                title: "Pick your setup",
-                body: "Choose role, language, and seniority. We generate a realistic PR diff with bugs planted by AI, different every time.",
-              },
-              {
-                n: "02",
-                title: "Write your review",
-                body: "Treat it like a real PR. Catch bugs, explain what's wrong, suggest fixes. Write like a senior engineer.",
-              },
-              {
-                n: "03",
-                title: "See your gaps",
-                body: "AI grades against the known bug list. See exactly what you caught, what you missed, and how to write a stronger review.",
-              },
-            ].map(({ n, title, body }) => (
-              <div key={n} className="flex flex-col gap-3">
-                <span className="text-[11px] font-mono text-[#333]">{n}</span>
-                <h3 className="text-[14px] font-bold text-white">{title}</h3>
-                <p className="text-[13px] text-[#555] leading-relaxed">
-                  {body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA STRIP */}
-      <div className="border-t border-[#1a1a1a] px-8 py-20 flex flex-col items-center text-center relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-15"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, #6366f1 0%, transparent 60%)",
-          }}
-        />
-        <div className="relative">
-          <h2
-            className="text-[36px] font-black tracking-tight mb-4"
-            style={{
-              background: "linear-gradient(180deg, #ffffff 0%, #888 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Ready to level up your reviews?
-          </h2>
-          <p className="text-[#555] text-[14px] mb-8">
-            Start free. No card required. One review on us.
-          </p>
-          <Link
-            href="/login"
-            className="bg-white text-black font-bold px-8 py-3 rounded-md hover:bg-[#e4e4e7] transition-colors text-[14px] tracking-tight"
-          >
-            Get started free
-          </Link>
-        </div>
-      </div>
-
-      {/* FOOTER */}
-      <div className="border-t border-[#1a1a1a] px-8 py-6 flex items-center justify-between">
-        <span className="text-[22px] font-black tracking-tight text-[#222]">
-          ReviewIQ
-        </span>
-        <span className="text-[12px] text-[#333]">© 2026 ReviewIQ</span>
-      </div>
+      </section>
+      <section id="method" className="border-t border-[#ffffff12] bg-[#13191e] px-6 py-20 lg:px-10 lg:py-24"><div className="mx-auto max-w-7xl"><div className="mb-12 flex flex-wrap items-end justify-between gap-6"><div><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">The practice loop</p><h2 className="mt-3 text-[32px] font-semibold tracking-[-1.2px] sm:text-[40px]">Build judgment through repetition.</h2></div><p className="max-w-sm text-[13px] leading-6 text-[#929ca3]">Every session gives you a clear signal on what you noticed and where your review can get sharper.</p></div><div className="grid gap-8 border-t border-[#ffffff17] pt-7 sm:grid-cols-3 sm:gap-10">{steps.map(([number,title,body])=><article key={number}><p className="font-mono text-[11px] text-[#ff927e]">{number}</p><h3 className="mt-5 text-[16px] font-semibold">{title}</h3><p className="mt-2 max-w-sm text-[12px] leading-6 text-[#929ca3]">{body}</p></article>)}</div></div></section>
+      <section className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-6 py-20 sm:flex-row sm:items-center lg:px-10"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff927e]">Your next review starts here</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">Make your instincts interview ready.</h2></div><Link href="/pricing" className="rounded-md border border-[#ffffff2a] px-5 py-3 text-[12px] font-semibold transition hover:border-[#ff806a] hover:text-[#ff9a87]">Explore ReviewIQ Pro <span className="ml-3">↗</span></Link></section>
+      <footer className="flex items-center justify-between border-t border-[#ffffff12] px-6 py-6 text-[11px] text-[#76818a] lg:px-10"><Link href="/" className="font-extrabold tracking-[-.7px] text-[#d8dcde]">Review<span className="text-[#ff806a]">IQ</span></Link><span>Practice with intention. Review with confidence.</span><span>© 2026 ReviewIQ</span></footer>
     </main>
   );
 }

@@ -3,9 +3,12 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { openExercise } from "@/lib/exercise-token";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 export async function POST(req: Request) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "Review grading is temporarily unavailable." }, { status: 503 });
+  }
+  const client = new OpenAI({ apiKey });
   const supabase = await createClient();
 
   const {
@@ -110,21 +113,35 @@ ${userReview}`,
 
   const data = JSON.parse(response.choices[0].message.content!);
 
-  await supabase.rpc("decrement_credits");
+  const { data: completed, error: completionError } = await supabase.rpc(
+    "complete_review",
+    {
+      p_role: role,
+      p_language: language,
+      p_seniority: seniority,
+      p_code: code,
+      p_bugs: bugs,
+      p_user_review: userReview,
+      p_score: data.score,
+      p_caught: data.caught,
+      p_missed: data.missed,
+      p_feedback: data.feedback,
+    },
+  );
 
-  await supabase.from("reviews").insert({
-    user_id: user.id,
-    role,
-    language,
-    seniority,
-    code,
-    bugs,
-    user_review: userReview,
-    score: data.score,
-    caught: data.caught,
-    missed: data.missed,
-    feedback: data.feedback,
-  });
+  if (completionError) {
+    console.error("Could not save completed review", completionError.message);
+    return NextResponse.json(
+      { error: "Your review was graded but could not be saved. No credit was used." },
+      { status: 500 },
+    );
+  }
+  if (!completed) {
+    return NextResponse.json(
+      { error: "No credits remaining. Upgrade to ReviewIQ Pro to continue." },
+      { status: 402 },
+    );
+  }
 
   return NextResponse.json({ ...data, bugs });
 }

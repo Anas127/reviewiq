@@ -44,8 +44,8 @@ export default function ReviewPage() {
     fetch("/api/credits").then((response) => response.json()).then((data) => setCredits(data.credits));
   }, [grade]);
 
-  function handleBuyCredits(pack: "10" | "30") {
-    const url = pack === "10" ? process.env.NEXT_PUBLIC_LS_10_REVIEWS_URL : process.env.NEXT_PUBLIC_LS_30_REVIEWS_URL;
+  function handleUpgrade() {
+    const url = process.env.NEXT_PUBLIC_GUMROAD_URL;
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 
@@ -65,7 +65,7 @@ export default function ReviewPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setGenerateError(response.status === 402 ? "No credits left. Buy a pack to continue." : data.error ?? "Couldn't generate an exercise. Try again.");
+        setGenerateError(response.status === 402 ? "No credits left. Upgrade to ReviewIQ Pro to continue." : data.error ?? "Couldn't generate an exercise. Try again.");
         return;
       }
       setCode(data.code);
@@ -115,7 +115,7 @@ export default function ReviewPage() {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="hidden items-center gap-2 text-[12px] text-[#b8c0c6] sm:flex"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#ff765f]" />{credits === null ? "Loading credits" : `${credits} practice credit${credits === 1 ? "" : "s"} left`}</span>
-          <button onClick={() => handleBuyCredits("10")} className="rounded-md border border-[#48515a] px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:border-[#ff765f] hover:text-[#ff9a86]">Buy credits</button>
+          <button onClick={handleUpgrade} className="rounded-md border border-[#48515a] px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:border-[#ff765f] hover:text-[#ff9a86]">Upgrade to Pro</button>
           <button onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); window.location.href = "/"; }} className="rounded-md px-2 py-2 text-[12px] font-medium text-[#9ba5ad] transition-colors hover:text-white">Sign out</button>
         </div>
       </header>

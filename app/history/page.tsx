@@ -59,9 +59,9 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="h-screen bg-[#0f0f0f] text-white flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#101418] text-[#f4f5f6] flex flex-col overflow-hidden lg:h-screen">
       {/* NAV */}
-      <nav className="border-b border-[#252525] px-8 h-16 flex items-center justify-between flex-shrink-0">
+      <nav className="border-b border-[#ffffff14] px-6 sm:px-10 h-[76px] flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-8">
           <Link
             href="/"
@@ -120,7 +120,7 @@ export default function HistoryPage() {
       ) : (
         <div className="flex flex-1 overflow-hidden">
           {/* LIST */}
-          <div className="w-72 border-r border-[#222] overflow-y-auto flex-shrink-0 bg-[#0a0a0a]">
+          <div className="w-72 border-r border-[#ffffff14] overflow-y-auto flex-shrink-0 bg-[#12181d]">
             <div className="p-4">
               <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
                 {reviews.length} session{reviews.length !== 1 ? "s" : ""}
@@ -132,7 +132,7 @@ export default function HistoryPage() {
                     onClick={() => setSelected(r)}
                     className={`p-3 rounded-md border cursor-pointer transition-all ${
                       selected?.id === r.id
-                        ? "border-[#3f3f46] bg-[#18181b]"
+                        ? "border-[#ff806a66] bg-[#ff806a0d]"
                         : "border-transparent hover:border-[#27272a] hover:bg-[#111]"
                     }`}
                   >
@@ -164,7 +164,7 @@ export default function HistoryPage() {
 
           {/* DETAIL */}
           {selected && (
-            <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-[#0f0f0f]">
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 bg-[#101418]">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div>
