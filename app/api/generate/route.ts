@@ -198,6 +198,7 @@ ${bug.instruction}`,
 
     const response = await client.chat.completions.create({
       model: "gpt-6-sol",
+      reasoning_effort: "none",
       messages: [
         {
           role: "system",
