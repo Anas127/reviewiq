@@ -3,46 +3,63 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { sealExercise } from "@/lib/exercise-token";
 
+const MAX_GENERATION_ATTEMPTS = 3;
+
 export async function POST(req: Request) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Exercise generation is temporarily unavailable." },
-      { status: 503 },
-    );
-  }
-  const client = new OpenAI({ apiKey });
-  const supabase = await createClient();
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
 
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Exercise generation is temporarily unavailable." },
+        { status: 503 },
+      );
+    }
 
-  // Check credits
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("credits")
-    .eq("id", user.id)
-    .single();
+    const client = new OpenAI({ apiKey });
+    const supabase = await createClient();
 
-  if (!profile || profile.credits < 1) {
-    return NextResponse.json(
-      { error: "No credits remaining" },
-      { status: 402 },
-    );
-  }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const { role, language, seniority } = await req.json();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const response = await client.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: `You are a senior software engineer creating realistic code review interview exercises.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || profile.credits < 1) {
+      return NextResponse.json(
+        { error: "No credits remaining" },
+        { status: 402 },
+      );
+    }
+
+    const { role, language, seniority } = await req.json();
+
+    if (
+      typeof role !== "string" ||
+      typeof language !== "string" ||
+      typeof seniority !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid exercise configuration" },
+        { status: 400 },
+      );
+    }
+
+    for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+      const response = await client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior software engineer creating realistic code review interview exercises.
 
 Generate a pull request containing exactly 3 intentional bugs.
 
@@ -69,7 +86,7 @@ Allowed bug categories:
 - Duplicate handling
 - Incorrect condition ordering
 - Race conditions
-- Security issues (SQL injection, command injection, unsafe deserialization, etc.)
+- Security issues such as SQL injection, command injection, or unsafe deserialization
 - Authentication or authorization mistakes
 
 Do NOT generate:
@@ -126,80 +143,153 @@ Respond ONLY as JSON:
 }
 
 Return only raw JSON. No markdown.`,
-      },
-      {
-        role: "user",
-        content: `Role: ${role}\nLanguage: ${language}\nSeniority: ${seniority}`,
-      },
-    ],
-    temperature: 0.4,
-    response_format: { type: "json_object" },
-  });
+          },
+          {
+            role: "user",
+            content: `Role: ${role}\nLanguage: ${language}\nSeniority: ${seniority}`,
+          },
+        ],
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+      });
 
-  const data = JSON.parse(response.choices[0].message.content!);
+      const content = response.choices[0]?.message?.content;
 
-  const validationResponse = await client.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: `You are validating a code review interview exercise.
+      if (!content) {
+        console.error(`Generation attempt ${attempt}: empty response`);
+        continue;
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(content);
+      } catch {
+        console.error(`Generation attempt ${attempt}: invalid JSON`);
+        continue;
+      }
+
+      if (
+        typeof data.code !== "string" ||
+        !Array.isArray(data.bugs) ||
+        data.bugs.length !== 3
+      ) {
+        console.error(`Generation attempt ${attempt}: invalid structure`);
+        continue;
+      }
+
+      const validationResponse = await client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are an independent validator for a code review interview exercise.
 
 Check whether EACH claimed bug genuinely exists in the provided code.
 
 A valid planted bug must:
 - Be objectively demonstrable from the code.
 - Cause a concrete correctness, security, reliability, or resource-management problem.
-- Not depend on undocumented requirements.
+- Not depend on undocumented requirements or assumptions.
 - Not merely be a best practice or stylistic preference.
 - Not claim missing validation when the code already handles the case.
+- Be distinct from the other planted bugs.
 
-Be strict. If even one claimed bug is questionable, vague, contextual, or not actually a defect, the exercise fails validation.
+Be strict.
+
+Examples of reasons to reject:
+- The claimed failure cannot actually occur.
+- The code already prevents the claimed bug.
+- The claim depends on unspecified application requirements.
+- The issue is merely defensive programming or a best practice.
+- A configuration choice is labeled a vulnerability without a concrete security defect.
+- Two bugs are merely different consequences of the same underlying defect.
+
+If even one bug fails these requirements, reject the entire exercise.
 
 Return ONLY JSON:
+
 {
-  "valid": true
+  "valid": true,
+  "reason": ""
 }
 
-or
+or:
 
 {
   "valid": false,
-  "reason": "short explanation"
+  "reason": "Short explanation of what is invalid."
 }`,
-      },
-      {
-        role: "user",
-        content: `CODE:
+          },
+          {
+            role: "user",
+            content: `CODE:
 ${data.code}
 
 CLAIMED BUGS:
 ${JSON.stringify(data.bugs)}`,
-      },
-    ],
-    temperature: 0,
-    response_format: { type: "json_object" },
-  });
+          },
+        ],
+        temperature: 0,
+        response_format: { type: "json_object" },
+      });
 
-  const validation = JSON.parse(validationResponse.choices[0].message.content!);
+      const validationContent = validationResponse.choices[0]?.message?.content;
 
-  if (!validation.valid) {
-    console.error("Generated exercise failed validation:", validation.reason);
+      if (!validationContent) {
+        console.error(`Validation attempt ${attempt}: empty response`);
+        continue;
+      }
+
+      let validation;
+
+      try {
+        validation = JSON.parse(validationContent);
+      } catch {
+        console.error(`Validation attempt ${attempt}: invalid JSON`);
+        continue;
+      }
+
+      if (validation.valid !== true) {
+        console.warn(
+          `Exercise rejected on attempt ${attempt}:`,
+          validation.reason,
+        );
+        continue;
+      }
+
+      // Only a validated exercise ever reaches the user.
+      const exerciseToken = sealExercise({
+        userId: user.id,
+        code: data.code,
+        bugs: data.bugs,
+        role,
+        language,
+        seniority,
+      });
+
+      return NextResponse.json({
+        code: data.code,
+        exerciseToken,
+      });
+    }
+
+    // All internal attempts failed. Don't expose validation details to customers.
+    console.error("Could not produce a valid exercise after all attempts");
 
     return NextResponse.json(
-      { error: "Generated exercise failed validation. Please try again." },
-      { status: 422 },
+      {
+        error:
+          "We couldn't generate this exercise right now. Please try again.",
+      },
+      { status: 503 },
+    );
+  } catch (error) {
+    console.error("Exercise generation failed:", error);
+
+    return NextResponse.json(
+      { error: "Exercise generation is temporarily unavailable." },
+      { status: 500 },
     );
   }
-
-  const exerciseToken = sealExercise({
-    userId: user.id,
-    code: data.code,
-    bugs: data.bugs,
-    role,
-    language,
-    seniority,
-  });
-
-  return NextResponse.json({ code: data.code, exerciseToken });
 }
