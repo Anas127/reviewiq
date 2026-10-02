@@ -137,6 +137,61 @@ Return only raw JSON. No markdown.`,
   });
 
   const data = JSON.parse(response.choices[0].message.content!);
+
+  const validationResponse = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `You are validating a code review interview exercise.
+
+Check whether EACH claimed bug genuinely exists in the provided code.
+
+A valid planted bug must:
+- Be objectively demonstrable from the code.
+- Cause a concrete correctness, security, reliability, or resource-management problem.
+- Not depend on undocumented requirements.
+- Not merely be a best practice or stylistic preference.
+- Not claim missing validation when the code already handles the case.
+
+Be strict. If even one claimed bug is questionable, vague, contextual, or not actually a defect, the exercise fails validation.
+
+Return ONLY JSON:
+{
+  "valid": true
+}
+
+or
+
+{
+  "valid": false,
+  "reason": "short explanation"
+}`,
+      },
+      {
+        role: "user",
+        content: `CODE:
+${data.code}
+
+CLAIMED BUGS:
+${JSON.stringify(data.bugs)}`,
+      },
+    ],
+    temperature: 0,
+    response_format: { type: "json_object" },
+  });
+
+  const validation = JSON.parse(validationResponse.choices[0].message.content!);
+
+  if (!validation.valid) {
+    console.error("Generated exercise failed validation:", validation.reason);
+
+    return NextResponse.json(
+      { error: "Generated exercise failed validation. Please try again." },
+      { status: 422 },
+    );
+  }
+
   const exerciseToken = sealExercise({
     userId: user.id,
     code: data.code,
