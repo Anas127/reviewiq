@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const supabase = createClient();
 
@@ -16,12 +15,20 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const isSignUp = searchParams.get("mode") === "signup";
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsSignUp(params.get("mode") === "signup");
+  }, []);
 
   function switchMode(signUp: boolean) {
     setError("");
     setMessage("");
-    router.push(signUp ? "/login?mode=signup" : "/login");
+    setIsSignUp(signUp);
+
+    const url = signUp ? "/login?mode=signup" : "/login";
+    window.history.replaceState(null, "", url);
   }
 
   async function handleSubmit() {
