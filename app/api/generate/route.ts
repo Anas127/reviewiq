@@ -6,7 +6,10 @@ import { sealExercise } from "@/lib/exercise-token";
 export async function POST(req: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "Exercise generation is temporarily unavailable." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Exercise generation is temporarily unavailable." },
+      { status: 503 },
+    );
   }
   const client = new OpenAI({ apiKey });
   const supabase = await createClient();
@@ -81,6 +84,23 @@ Do NOT generate:
 - Bugs that depend on undocumented requirements
 
 Each planted bug must have a single objectively correct explanation.
+
+Before returning the exercise, internally verify every planted bug against the final code.
+
+For each bug, confirm:
+- The claimed defect actually exists in the final code.
+- The code does not already handle or prevent the claimed defect.
+- The defect causes a concrete correctness, security, reliability, or resource-management problem.
+- The defect can be demonstrated without assuming undocumented requirements or deployment conditions.
+- A reasonable reviewer could identify it directly from the provided code.
+
+Reject and replace any proposed bug that fails any of these checks.
+
+Important:
+- Do not claim missing input validation when the relevant input is already validated.
+- Do not treat normal framework or deployment configuration as a security vulnerability without a concrete exploitable defect.
+- Do not use debatable best practices as planted bugs.
+- The 3 planted bugs must be distinct underlying defects.
 
 Respond ONLY as JSON:
 
