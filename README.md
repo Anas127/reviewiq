@@ -46,28 +46,7 @@ Install dependencies with npm install and create .env.local with:
     GUMROAD_WEBHOOK_SECRET=a_long_random_secret
     NEXT_PUBLIC_GUMROAD_URL=https://yourname.gumroad.com/l/your-product
 
-In Gumroad, configure Ping to call:
 
-    https://your-domain.example/api/webhooks/gumroad?secret=YOUR_GUMROAD_WEBHOOK_SECRET
-
-Create Gumroad resource subscriptions for sale, cancellation, subscription_ended, and subscription_restarted, each using that endpoint as its post_url and adding event_type=EVENT_NAME to the URL (for example, ?secret=...&event_type=sale). The endpoint accepts Gumroad's JSON or URL-encoded event payloads. Set GUMROAD_PRODUCT_ID to the product ID or permalink shown in Gumroad, and ensure the payload includes buyer email, product ID/permalink, sale ID, and subscription ID for sale events. Successful sale data is verified through the Gumroad API before granting credits. Lifecycle events must match a subscription already recorded from a verified sale.
-
-Apply supabase/migrations/20261001000000_gumroad_credits.sql in the Supabase SQL editor before deploying.
-
-The existing project uses Supabase-managed profile and review tables; the migration adds the Gumroad event, pending-credit, and subscription tables and transactional functions/triggers. Confirm the profiles signup trigger continues to set email and credits to 5.
-
-## Launch verification checklist
-
-- New account receives 5 credits.
-- Verified initial Gumroad purchase grants 10 credits.
-- A later successful recurring payment grants another 10 credits.
-- User sees the new balance on the practice screen.
-- A successfully graded and stored review deducts 1 credit.
-- OpenAI, validation, or database failures do not consume credits.
-- Replaying the same sale event does not grant credits twice.
-- A buyer without a ReviewIQ account receives pending credits on signup.
-- Cancellation grants no future credits and leaves the existing balance intact.
-- A refunded or chargebacked sale is not granted.
 
 ## Development
 
