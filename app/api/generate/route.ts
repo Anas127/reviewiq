@@ -266,7 +266,6 @@ Language: ${language}
 Seniority: ${seniority}`,
         },
       ],
-      temperature: 0.35,
       response_format: { type: "json_object" },
     });
 
