@@ -197,7 +197,7 @@ ${bug.instruction}`,
       .join("\n\n");
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-6-sol",
       messages: [
         {
           role: "system",
