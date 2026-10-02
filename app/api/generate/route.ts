@@ -3,8 +3,6 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { sealExercise } from "@/lib/exercise-token";
 
-const MAX_GENERATION_ATTEMPTS = 3;
-
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -53,73 +51,77 @@ export async function POST(req: Request) {
       );
     }
 
-    for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-      const response = await client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are a senior software engineer creating realistic code review interview exercises.
+    const response = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a senior software engineer creating a realistic code review interview exercise.
 
-Generate a pull request containing exactly 3 intentional bugs.
+Generate ONE realistic code change containing exactly 3 intentional bugs.
 
-Rules:
-- The bugs MUST be objectively verifiable from the code alone.
-- A reviewer should never need hidden business requirements to identify them.
-- The code should look realistic and production-like.
-- The bugs should require careful review, but should not be impossible to find.
+The candidate will review the code without seeing the answer key. Your 3 bugs will become the fixed answer key used later to grade the candidate.
 
-Allowed bug categories:
-- Input validation
-- Missing null/None checks
-- Boundary conditions
-- Off-by-one errors
+QUALITY IS CRITICAL.
+
+Every planted bug MUST:
+- Actually exist in the final code you return.
+- Be objectively verifiable from the code alone.
+- Cause a concrete correctness, security, reliability, or resource-management problem.
+- Be identifiable without assuming undocumented business requirements.
+- Be distinct from the other two bugs.
+- Have one clearly correct explanation.
+- Be something a competent engineer could reasonably identify during code review.
+
+Good bug categories include:
+- Missing null/None handling where null can concretely occur
+- Boundary and off-by-one errors
 - Incorrect comparison operators
 - Division by zero
 - Incorrect loop logic
 - Removing items while iterating
 - Mutable shared state
-- Shallow vs deep copy
+- Shallow versus deep copy errors
 - Resource leaks
-- Missing error handling
+- Missing transaction commits
 - Incorrect return values
-- Duplicate handling
+- Duplicate handling errors
 - Incorrect condition ordering
 - Race conditions
-- Security issues such as SQL injection, command injection, or unsafe deserialization
-- Authentication or authorization mistakes
+- SQL injection
+- Command injection
+- Unsafe deserialization
+- Concrete authentication or authorization flaws
 
-Do NOT generate:
+DO NOT use:
 - Syntax errors
-- Formatting/style issues
-- Performance optimizations
-- Missing comments
+- Formatting or style issues
 - Naming issues
-- Subjective code quality issues
-- Hidden business rules
-- Bugs that require guessing the intended behavior
-- Bugs that depend on undocumented requirements
+- Missing comments
+- Mere performance optimizations
+- Subjective code-quality opinions
+- Generic "more validation would be better" claims
+- Hypothetical edge cases that the code already handles
+- Deployment configuration presented as a vulnerability without a concrete exploit
+- Hidden business requirements
+- Bugs whose validity depends on guessing intended behavior
+- Multiple bugs that are merely consequences of the same underlying defect
 
-Each planted bug must have a single objectively correct explanation.
+CRITICAL SELF-CHECK:
 
-Before returning the exercise, internally verify every planted bug against the final code.
+Before producing your final JSON, inspect the FINAL CODE against each of your three proposed bugs individually.
 
-For each bug, confirm:
-- The claimed defect actually exists in the final code.
-- The code does not already handle or prevent the claimed defect.
-- The defect causes a concrete correctness, security, reliability, or resource-management problem.
-- The defect can be demonstrated without assuming undocumented requirements or deployment conditions.
-- A reasonable reviewer could identify it directly from the provided code.
+For Bug 1, Bug 2 and Bug 3 ask:
+1. Can the claimed failure actually happen in this exact code?
+2. Does the code already prevent or handle it?
+3. Can I explain the concrete failure without inventing requirements?
+4. Is this genuinely different from the other two bugs?
 
-Reject and replace any proposed bug that fails any of these checks.
+If ANY answer makes the bug questionable, replace that bug and re-check the final code before responding.
 
-Important:
-- Do not claim missing input validation when the relevant input is already validated.
-- Do not treat normal framework or deployment configuration as a security vulnerability without a concrete exploitable defect.
-- Do not use debatable best practices as planted bugs.
-- The 3 planted bugs must be distinct underlying defects.
+The final code and answer key must agree exactly.
 
-Respond ONLY as JSON:
+Respond ONLY with valid JSON:
 
 {
   "code": "...",
@@ -127,163 +129,78 @@ Respond ONLY as JSON:
     {
       "id": 1,
       "line": "...",
-      "description": "Clear explanation of the bug and why it is incorrect."
+      "description": "Concrete explanation of the bug and its effect."
     },
     {
       "id": 2,
       "line": "...",
-      "description": "..."
+      "description": "Concrete explanation of the bug and its effect."
     },
     {
       "id": 3,
       "line": "...",
-      "description": "..."
+      "description": "Concrete explanation of the bug and its effect."
     }
   ]
 }
 
-Return only raw JSON. No markdown.`,
-          },
-          {
-            role: "user",
-            content: `Role: ${role}\nLanguage: ${language}\nSeniority: ${seniority}`,
-          },
-        ],
-        temperature: 0.4,
-        response_format: { type: "json_object" },
-      });
+Return raw JSON only.
+No markdown.
+No code fences.`,
+        },
+        {
+          role: "user",
+          content: `Create an exercise for:
+Role: ${role}
+Language: ${language}
+Seniority: ${seniority}`,
+        },
+      ],
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+    });
 
-      const content = response.choices[0]?.message?.content;
+    const content = response.choices[0]?.message?.content;
 
-      if (!content) {
-        console.error(`Generation attempt ${attempt}: empty response`);
-        continue;
-      }
-
-      let data;
-
-      try {
-        data = JSON.parse(content);
-      } catch {
-        console.error(`Generation attempt ${attempt}: invalid JSON`);
-        continue;
-      }
-
-      if (
-        typeof data.code !== "string" ||
-        !Array.isArray(data.bugs) ||
-        data.bugs.length !== 3
-      ) {
-        console.error(`Generation attempt ${attempt}: invalid structure`);
-        continue;
-      }
-
-      const validationResponse = await client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are an independent validator for a code review interview exercise.
-
-Check whether EACH claimed bug genuinely exists in the provided code.
-
-A valid planted bug must:
-- Be objectively demonstrable from the code.
-- Cause a concrete correctness, security, reliability, or resource-management problem.
-- Not depend on undocumented requirements or assumptions.
-- Not merely be a best practice or stylistic preference.
-- Not claim missing validation when the code already handles the case.
-- Be distinct from the other planted bugs.
-
-Be strict.
-
-Examples of reasons to reject:
-- The claimed failure cannot actually occur.
-- The code already prevents the claimed bug.
-- The claim depends on unspecified application requirements.
-- The issue is merely defensive programming or a best practice.
-- A configuration choice is labeled a vulnerability without a concrete security defect.
-- Two bugs are merely different consequences of the same underlying defect.
-
-If even one bug fails these requirements, reject the entire exercise.
-
-Return ONLY JSON:
-
-{
-  "valid": true,
-  "reason": ""
-}
-
-or:
-
-{
-  "valid": false,
-  "reason": "Short explanation of what is invalid."
-}`,
-          },
-          {
-            role: "user",
-            content: `CODE:
-${data.code}
-
-CLAIMED BUGS:
-${JSON.stringify(data.bugs)}`,
-          },
-        ],
-        temperature: 0,
-        response_format: { type: "json_object" },
-      });
-
-      const validationContent = validationResponse.choices[0]?.message?.content;
-
-      if (!validationContent) {
-        console.error(`Validation attempt ${attempt}: empty response`);
-        continue;
-      }
-
-      let validation;
-
-      try {
-        validation = JSON.parse(validationContent);
-      } catch {
-        console.error(`Validation attempt ${attempt}: invalid JSON`);
-        continue;
-      }
-
-      if (validation.valid !== true) {
-        console.warn(
-          `Exercise rejected on attempt ${attempt}:`,
-          validation.reason,
-        );
-        continue;
-      }
-
-      // Only a validated exercise ever reaches the user.
-      const exerciseToken = sealExercise({
-        userId: user.id,
-        code: data.code,
-        bugs: data.bugs,
-        role,
-        language,
-        seniority,
-      });
-
-      return NextResponse.json({
-        code: data.code,
-        exerciseToken,
-      });
+    if (!content) {
+      throw new Error("OpenAI returned empty exercise content");
     }
 
-    // All internal attempts failed. Don't expose validation details to customers.
-    console.error("Could not produce a valid exercise after all attempts");
+    const data = JSON.parse(content);
 
-    return NextResponse.json(
-      {
-        error:
-          "We couldn't generate this exercise right now. Please try again.",
-      },
-      { status: 503 },
-    );
+    if (
+      typeof data.code !== "string" ||
+      !Array.isArray(data.bugs) ||
+      data.bugs.length !== 3
+    ) {
+      throw new Error("Generated exercise has invalid structure");
+    }
+
+    for (let i = 0; i < data.bugs.length; i++) {
+      const bug = data.bugs[i];
+
+      if (
+        bug?.id !== i + 1 ||
+        typeof bug?.line !== "string" ||
+        typeof bug?.description !== "string"
+      ) {
+        throw new Error("Generated exercise has invalid bug structure");
+      }
+    }
+
+    const exerciseToken = sealExercise({
+      userId: user.id,
+      code: data.code,
+      bugs: data.bugs,
+      role,
+      language,
+      seniority,
+    });
+
+    return NextResponse.json({
+      code: data.code,
+      exerciseToken,
+    });
   } catch (error) {
     console.error("Exercise generation failed:", error);
 
