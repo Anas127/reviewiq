@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { createClient } from "@/lib/supabase/client";
-
+import posthog from "posthog-js";
 const ROLES = [
   "Backend Engineer",
   "Frontend Engineer",
@@ -130,6 +130,11 @@ export default function ReviewPage() {
 
       setCode(data.code);
       setExerciseToken(data.exerciseToken);
+      posthog.capture("exercise_generated", {
+        role,
+        language,
+        seniority,
+      });
     } catch {
       setGenerateError(
         "Couldn't reach the server. Check your connection and try again.",
@@ -175,6 +180,17 @@ export default function ReviewPage() {
       }
 
       setGrade(data);
+
+      posthog.capture("review_graded", {
+        role,
+        language,
+        seniority,
+        score: data.score,
+        issues_caught: data.caught?.length ?? 0,
+        total_issues: data.bugs?.length ?? 3,
+        credits_remaining: data.creditsRemaining,
+        review_number: data.reviewNumber,
+      });
 
       window.setTimeout(() => {
         resultsRef.current?.scrollIntoView({

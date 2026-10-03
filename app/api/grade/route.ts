@@ -358,6 +358,17 @@ ${userReview}`,
     );
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("credits")
+    .eq("id", user.id)
+    .single();
+
+  const { count: reviewCount } = await supabase
+    .from("reviews")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
   return NextResponse.json({
     score,
     caught,
@@ -367,5 +378,7 @@ ${userReview}`,
     reviewQuality,
     feedback,
     bugs,
+    creditsRemaining: profile?.credits ?? null,
+    reviewNumber: reviewCount ?? null,
   });
 }

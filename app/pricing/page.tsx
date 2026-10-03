@@ -1,10 +1,12 @@
 import Link from "next/link";
-
+import PricingAnalytics from "@/app/components/PricingAnalytics";
+import UpgradeButton from "@/app/components/UpgradeButton";
 const gumroadUrl = process.env.NEXT_PUBLIC_GUMROAD_URL;
 
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-[#101418] text-[#f4f5f6]">
+      <PricingAnalytics />
       <nav className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-6 lg:px-10">
         <Link href="/" className="text-[21px] font-extrabold tracking-[-1.2px]">
           Review<span className="text-[#ff806a]">IQ</span>
@@ -90,14 +92,7 @@ export default function PricingPage() {
                 Keep a steady rhythm and build a deeper review history.
               </p>
               {gumroadUrl ? (
-                <a
-                  href={gumroadUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-7 rounded-md bg-[#ff806a] py-3 text-center text-[12px] font-bold text-[#201715] transition hover:bg-[#ff9a87]"
-                >
-                  Get ReviewIQ Pro <span className="ml-2">↗</span>
-                </a>
+                <UpgradeButton href={gumroadUrl} />
               ) : (
                 <Link
                   href="/login"

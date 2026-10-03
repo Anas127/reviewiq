@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import posthog from "posthog-js";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,12 +33,15 @@ export default function LoginPage() {
   }
 
   async function handleSubmit() {
+    if (isSignUp) {
+      posthog.capture("signup_started");
+    }
     setLoading(true);
     setError("");
     setMessage("");
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -46,6 +50,11 @@ export default function LoginPage() {
         setError(error.message);
         setLoading(false);
         return;
+      }
+
+      if (data.user) {
+        posthog.identify(data.user.id);
+        posthog.capture("signup_completed");
       }
 
       setMessage("Account created. Signing you in...");
