@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LandingAnalytics from "@/app/components/LandingAnalytics";
 
 const steps = [
   [
@@ -21,6 +22,7 @@ const steps = [
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#101418] text-[#f4f5f6]">
+      <LandingAnalytics />
       <nav className="relative z-10 mx-auto flex h-[76px] max-w-7xl items-center justify-between px-6 lg:px-10">
         <Link href="/" className="text-[21px] font-extrabold tracking-[-1.2px]">
           Review<span className="text-[#ff806a]">IQ</span>
