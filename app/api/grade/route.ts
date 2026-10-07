@@ -132,7 +132,7 @@ export async function POST(req: Request) {
     messages: [
       {
         role: "system",
-        content: `You are a senior software engineering interviewer evaluating a candidate's code review.
+      content: `You are an experienced software engineer evaluating a developer's code review.
 
 You are given:
 1. Source code.

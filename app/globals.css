@@ -3,10 +3,15 @@
 
 
 body {
-  background: #0a0a0a;
-  color: #e4e4e7;
+  background: #101418;
+  color: #f4f5f6;
   font-family: -apple-system, "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid #ff9a87;
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar {
@@ -23,4 +28,15 @@ body {
 .review-textarea::placeholder {
   color: #888;
   opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

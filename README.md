@@ -1,6 +1,6 @@
 # ReviewIQ
 
-ReviewIQ is an AI-powered code review interview trainer. Engineers practice on realistic pull requests, submit written reviews, and receive feedback against known planted issues.
+ReviewIQ is deliberate practice for code-review judgment. Developers review realistic pull requests with planted issues, then see what they caught, what they missed, and why it matters. Interview readiness is a secondary benefit.
 
 **Live:** [reviewiq-ruby.vercel.app](https://reviewiq-ruby.vercel.app)
 
@@ -26,11 +26,15 @@ profiles.credits is the balance. New profiles start with 5 credits. pending_cred
 ## Pricing and credit rules
 
 - **Free:** 5 credits on account creation.
-- **ReviewIQ Pro:** €8.99 per month and 10 credits per successful billing cycle.
+- **ReviewIQ Pro:** $8.99 per month and 30 credits per successful billing cycle.
 - Unused credits roll over.
 - A credit is consumed only after AI grading succeeds and the review is stored successfully.
 - Gumroad sale events include the initial membership payment and each successful recurring payment. Failed, refunded, or chargebacked sales are not credited.
 - Cancellation stops later grants and does not remove existing credits.
+
+## Database migration
+
+Before deploying a credit allowance change, apply the migration under supabase/migrations to the Supabase SQL Editor. The current migration keeps the new-profile default at 5 and updates the Gumroad grant function to apply the amount supplied by the canonical application entitlement config.
 
 ## Local setup
 

@@ -1,6 +1,7 @@
 "use client";
 
-import posthog from "posthog-js";
+import { captureProductEvent } from "@/lib/analytics";
+import { PRO_CREDITS_PER_BILLING_CYCLE } from "@/lib/credit-config";
 
 type UpgradeButtonProps = {
   href: string;
@@ -8,7 +9,9 @@ type UpgradeButtonProps = {
 
 export default function UpgradeButton({ href }: UpgradeButtonProps) {
   function handleClick() {
-    posthog.capture("upgrade_clicked");
+    captureProductEvent("pro_plan_cta_clicked", { provider: "gumroad" });
+    captureProductEvent("upgrade_clicked", { provider: "gumroad" });
+    captureProductEvent("checkout_started", { provider: "gumroad" });
   }
 
   return (
@@ -19,7 +22,7 @@ export default function UpgradeButton({ href }: UpgradeButtonProps) {
       onClick={handleClick}
       className="mt-7 rounded-md bg-[#ff806a] py-3 text-center text-[12px] font-bold text-[#201715] transition hover:bg-[#ff9a87]"
     >
-      Get ReviewIQ Pro <span className="ml-2">↗</span>
+      Unlock {PRO_CREDITS_PER_BILLING_CYCLE} reviews <span className="ml-2">↗</span>
     </a>
   );
 }

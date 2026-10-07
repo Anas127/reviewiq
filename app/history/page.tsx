@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import ProductHeader from "@/app/components/ProductHeader";
+import { captureProductEvent } from "@/lib/analytics";
 
 type Review = {
   id: string;
@@ -25,6 +27,7 @@ export default function HistoryPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selected, setSelected] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
+  const viewTracked = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -35,6 +38,11 @@ export default function HistoryPage() {
       if (!user) {
         window.location.href = "/login";
         return;
+      }
+
+      if (!viewTracked.current) {
+        viewTracked.current = true;
+        captureProductEvent("history_viewed");
       }
 
       const { data } = await supabase
@@ -60,41 +68,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#101418] text-[#f4f5f6] flex flex-col overflow-hidden lg:h-screen">
-      {/* NAV */}
-      <nav className="border-b border-[#ffffff14] px-6 sm:px-10 h-[76px] flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-8">
-          <Link
-            href="/"
-            className="text-[21px] font-extrabold tracking-[-1.1px] text-[#f4f5f6]"
-          >
-            Review<span className="text-[#ff765f]">IQ</span>
-          </Link>
-          <div className="flex items-center gap-1">
-            {[
-              { label: "Review", href: "/review" },
-              { label: "History", href: "/history" },
-            ].map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className={`text-[13px] font-semibold cursor-pointer transition-all px-3 py-1.5 rounded-md ${
-                  label === "History"
-                    ? "text-white bg-[#222]"
-                    : "text-[#777] hover:text-white hover:bg-[#1a1a1a]"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <Link
-          href="/review"
-          className="bg-white text-black text-[13px] font-bold px-5 py-2 rounded-md hover:bg-[#e4e4e7] transition-colors tracking-tight"
-        >
-          New Review
-        </Link>
-      </nav>
+      <ProductHeader active="history" />
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -107,30 +81,31 @@ export default function HistoryPage() {
               No reviews yet
             </p>
             <p className="text-[#555] text-[13px] mb-6">
-              Complete your first review to see your history.
+              Complete your first review to see what you caught and missed.
             </p>
             <Link
               href="/review"
               className="bg-white text-black text-[13px] font-bold px-6 py-2.5 rounded-md hover:bg-[#e4e4e7] transition-colors"
             >
-              Start reviewing →
+              Start your first review →
             </Link>
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* LIST */}
-          <div className="w-72 border-r border-[#ffffff14] overflow-y-auto flex-shrink-0 bg-[#12181d]">
+          <div className="max-h-60 w-full flex-shrink-0 overflow-y-auto border-b border-[#ffffff14] bg-[#12181d] lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
             <div className="p-4">
               <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
                 {reviews.length} session{reviews.length !== 1 ? "s" : ""}
               </p>
               <div className="space-y-1.5">
                 {reviews.map((r) => (
-                  <div
+                  <button
                     key={r.id}
                     onClick={() => setSelected(r)}
-                    className={`p-3 rounded-md border cursor-pointer transition-all ${
+                    aria-pressed={selected?.id === r.id}
+                    className={`block w-full rounded-md border p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-[#ff9a87] ${
                       selected?.id === r.id
                         ? "border-[#ff806a66] bg-[#ff806a0d]"
                         : "border-transparent hover:border-[#27272a] hover:bg-[#111]"
@@ -156,7 +131,7 @@ export default function HistoryPage() {
                     <p className="text-[11px] text-[#3f3f46] mt-1">
                       {formatDate(r.created_at)}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -194,7 +169,7 @@ export default function HistoryPage() {
                     </span>
                   </div>
                   <p className="text-[12px] text-[#71717a] mt-1">
-                    {selected.caught.length} of {selected.bugs.length} bugs
+                    {selected.caught.length} of {selected.bugs.length} issues
                     caught
                   </p>
                 </div>
@@ -226,16 +201,19 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* Bug breakdown */}
+              {/* Caught and missed issue breakdown */}
               <div>
                 <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
-                  Bug Breakdown
+                  Issue breakdown
                 </p>
                 <div className="space-y-2">
                   {selected.bugs.map((bug) => {
                     const caught = selected.caught.some((item) =>
                       typeof item === "number" ? item === bug.id : item.bug === bug.id,
                     );
+                    const detail = caught
+                      ? selected.caught.find((item) => typeof item !== "number" && item.bug === bug.id)
+                      : selected.missed.find((item) => typeof item !== "number" && item.bug === bug.id);
                     return (
                       <div
                         key={bug.id}
@@ -258,11 +236,12 @@ export default function HistoryPage() {
                           <p
                             className={`text-[13px] font-semibold mb-1 ${caught ? "text-emerald-300" : "text-red-300"}`}
                           >
-                            Bug {bug.id} — {caught ? "Caught" : "Missed"}
+                            Issue {bug.id} — {caught ? "Caught" : "Missed"}
                           </p>
-                          <p className="text-[12px] text-[#71717a] leading-relaxed">
+                          <p className="text-[12px] text-[#b3bdc2] leading-relaxed">
                             {bug.description}
                           </p>
+                          {detail && typeof detail !== "number" && <p className="mt-2 text-[12px] leading-relaxed text-[#89959d]">{detail.reason}</p>}
                         </div>
                       </div>
                     );
@@ -273,7 +252,7 @@ export default function HistoryPage() {
               {/* Feedback */}
               <div className="bg-[#111] border border-[#222] rounded-lg p-5">
                 <p className="text-[10px] font-bold text-[#444] uppercase tracking-widest mb-3">
-                  Interviewer Feedback
+                  Review feedback
                 </p>
                 <p className="text-[13px] text-[#a1a1aa] leading-relaxed">
                   {selected.feedback}

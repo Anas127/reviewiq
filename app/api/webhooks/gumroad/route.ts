@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { PostHog } from "posthog-node";
+import { PRO_CREDITS_PER_BILLING_CYCLE } from "@/lib/credit-config";
 const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
   host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
 });
@@ -168,7 +169,8 @@ export async function POST(request: Request) {
     p_email: email,
     p_sale_id: saleId || null,
     p_subscription_id: subscriptionId,
-    p_credits: resolvedType === "sale" ? 10 : 0,
+    p_credits:
+      resolvedType === "sale" ? PRO_CREDITS_PER_BILLING_CYCLE : 0,
   });
   if (error) {
     console.error("Gumroad webhook storage failed", error.message);
@@ -195,7 +197,7 @@ export async function POST(request: Request) {
         distinctId: profile.id,
         event: "purchase_completed",
         properties: {
-          credits_added: 10,
+          credits_added: PRO_CREDITS_PER_BILLING_CYCLE,
         },
       });
 

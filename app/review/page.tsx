@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { createClient } from "@/lib/supabase/client";
-import posthog from "posthog-js";
+import ProductHeader from "@/app/components/ProductHeader";
+import { captureProductEvent, captureProductEventOnce } from "@/lib/analytics";
 const ROLES = [
   "Backend Engineer",
   "Frontend Engineer",
@@ -29,6 +28,8 @@ type Grade = {
   }[];
   extraFindings: string[];
   feedback: string;
+  creditsRemaining?: number;
+  reviewNumber?: number;
   bugs: {
     id: number;
     description: string;
@@ -69,30 +70,48 @@ export default function ReviewPage() {
   const [generating, setGenerating] = useState(false);
   const [grading, setGrading] = useState(false);
 
-  const [credits, setCredits] = useState<number | null>(null);
+  const [completedReviews, setCompletedReviews] = useState(0);
+  const [reviewCountLoaded, setReviewCountLoaded] = useState(false);
+  const [userId, setUserId] = useState("");
 
   const [generateError, setGenerateError] = useState("");
   const [gradeError, setGradeError] = useState("");
 
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/credits")
       .then((response) => response.json())
-      .then((data) => setCredits(data.credits))
+      .then((data) => {
+        setCompletedReviews(data.completedReviews ?? 0);
+        setUserId(data.userId ?? "");
+        setReviewCountLoaded(true);
+      })
       .catch(() => {});
   }, [grade]);
 
-  function handleUpgrade() {
-    const url = process.env.NEXT_PUBLIC_GUMROAD_URL;
-
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
+  useEffect(() => {
+    if (code && exerciseToken && completedReviews === 0 && userId) {
+      captureProductEventOnce(`first-exercise-started-${userId}`, "first_exercise_started", { role, language, seniority });
     }
-  }
+  }, [code, exerciseToken, completedReviews, userId, role, language, seniority]);
+
+  useEffect(() => {
+    if (grade?.reviewNumber === 1 && userId) {
+      captureProductEventOnce(`first-result-viewed-${userId}`, "first_result_viewed", {
+        score: grade.score,
+        issues_caught: grade.caught.length,
+        total_issues: grade.bugs.length,
+      });
+    }
+  }, [grade, userId]);
 
   async function handleGenerate() {
     if (generating || grading) return;
+
+    const reviewCount = Math.max(completedReviews, grade?.reviewNumber ?? 0);
+    if (reviewCount === 1 && userId) {
+      captureProductEventOnce(`second-review-started-${userId}`, "second_review_started");
+    }
 
     setGenerating(true);
 
@@ -130,7 +149,7 @@ export default function ReviewPage() {
 
       setCode(data.code);
       setExerciseToken(data.exerciseToken);
-      posthog.capture("exercise_generated", {
+      captureProductEvent("exercise_generated", {
         role,
         language,
         seniority,
@@ -159,6 +178,10 @@ export default function ReviewPage() {
     setGrading(true);
     setGradeError("");
 
+    if (completedReviews === 0 && userId) {
+      captureProductEventOnce(`first-review-submitted-${userId}`, "first_review_submitted", { role, language, seniority });
+    }
+
     try {
       const response = await fetch("/api/grade", {
         method: "POST",
@@ -180,8 +203,9 @@ export default function ReviewPage() {
       }
 
       setGrade(data);
+      window.dispatchEvent(new Event("reviewiq:credits-updated"));
 
-      posthog.capture("review_graded", {
+      captureProductEvent("review_graded", {
         role,
         language,
         seniority,
@@ -191,13 +215,6 @@ export default function ReviewPage() {
         credits_remaining: data.creditsRemaining,
         review_number: data.reviewNumber,
       });
-
-      window.setTimeout(() => {
-        resultsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 50);
     } catch {
       setGradeError(
         "Couldn't reach the server. Your review is still here. Try again.",
@@ -220,68 +237,9 @@ export default function ReviewPage() {
 
   return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-[#101418] text-[#f4f5f6] lg:h-screen lg:min-h-0">
-      <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-[#273039] bg-[#0d1115] px-5 py-3 sm:px-7">
-        <div className="flex items-center gap-7">
-          <Link
-            href="/"
-            className="text-[21px] font-extrabold tracking-[-1.1px] text-[#f4f5f6]"
-          >
-            Review<span className="text-[#ff765f]">IQ</span>
-          </Link>
+      <ProductHeader active="review" />
 
-          <div className="hidden h-6 w-px bg-[#303840] sm:block" />
-
-          <nav aria-label="Main navigation" className="flex items-center gap-1">
-            <Link
-              href="/review"
-              aria-current="page"
-              className="rounded px-3 py-2 text-[13px] font-semibold text-white hover:bg-[#20262b]"
-            >
-              Practice
-            </Link>
-
-            <Link
-              href="/history"
-              className="rounded px-3 py-2 text-[13px] font-medium text-[#a4adb4] transition-colors hover:bg-[#20262b] hover:text-white"
-            >
-              History
-            </Link>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="hidden items-center gap-2 text-[12px] text-[#b8c0c6] sm:flex">
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-[#ff765f]"
-            />
-
-            {credits === null
-              ? "Loading credits"
-              : `${credits} practice credit${credits === 1 ? "" : "s"} left`}
-          </span>
-
-          <button
-            onClick={handleUpgrade}
-            className="rounded-md border border-[#48515a] px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:border-[#ff765f] hover:text-[#ff9a86]"
-          >
-            Upgrade to Pro
-          </button>
-
-          <button
-            onClick={async () => {
-              const supabase = createClient();
-              await supabase.auth.signOut();
-              window.location.href = "/";
-            }}
-            className="rounded-md px-2 py-2 text-[12px] font-medium text-[#9ba5ad] transition-colors hover:text-white"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
-
-      <section className="flex flex-wrap items-center justify-between gap-4 border-b border-[#273039] bg-[#14191e] px-5 py-3 sm:px-7">
+      {!grade && <section className="flex flex-wrap items-center justify-between gap-4 border-b border-[#273039] bg-[#14191e] px-5 py-3 sm:px-7">
         <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
           {[
             {
@@ -333,10 +291,37 @@ export default function ReviewPage() {
             ? "Generating exercise..."
             : code
               ? "New exercise"
-              : "Generate exercise"}
+              : "Start review"}
         </button>
-      </section>
+      </section>}
 
+      {grade ? (
+        <main aria-label="Review result" className="flex-1 overflow-y-auto px-5 py-8 sm:px-8 sm:py-10">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex flex-wrap items-end justify-between gap-6 border-b border-[#273039] pb-7">
+              <div><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-[#ff9a87]">Your review result</p><h1 className="mt-2 text-[30px] font-semibold tracking-[-1px] sm:text-[36px]">Here’s what your judgment caught.</h1><p className="mt-2 text-[13px] text-[#aab4ba]">{role} · {seniority} · {language}</p></div>
+              <div className="flex items-end gap-5"><div><p className="text-[10px] font-semibold uppercase tracking-[.13em] text-[#aab4ba]">Review score</p><p className="mt-1 text-[48px] font-bold leading-none text-[#ff8b76]">{grade.score}<span className="ml-1 text-[21px] font-medium text-[#a4adb3]">/10</span></p></div><p className="pb-1 text-[13px] font-medium text-[#d6dcdf]">{grade.caught.length} of {grade.bugs.length} issues caught</p></div>
+            </div>
+            <p className="mt-5 text-[12px] leading-5 text-[#aab4ba]">Your score combines issue detection and how clearly you explained your findings. Use the breakdown to guide your next review.</p>
+            <div className="mt-7 grid gap-4 md:grid-cols-2">
+              {grade.bugs.map((bug) => {
+                const caught = grade.caught.some((item) => item.bug === bug.id);
+                const reason = caught ? grade.caught.find((item) => item.bug === bug.id)?.reason : grade.missed.find((item) => item.bug === bug.id)?.reason;
+                return <article key={bug.id} className={`rounded-lg border p-5 ${caught ? "border-emerald-300/25 bg-emerald-300/[.045]" : "border-[#ff806a40] bg-[#ff806a0a]"}`}>
+                  <p className={`text-[12px] font-semibold ${caught ? "text-[#a9dfbc]" : "text-[#ffab98]"}`}>{caught ? "Caught" : "Missed"} · Issue {bug.id}</p>
+                  <h2 className="mt-2 text-[14px] font-semibold text-[#edf0f1]">{bug.description}</h2>
+                  <p className="mt-2 text-[12px] leading-6 text-[#c0c8cd]">{reason || "This planted issue was not identified in the review."}</p>
+                </article>;
+              })}
+            </div>
+            {grade.extraFindings.length > 0 && <section className="mt-7 rounded-lg border border-[#ffffff18] bg-[#13191e] p-5"><h2 className="text-[12px] font-semibold text-[#e7eaec]">Additional findings</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-[12px] leading-5 text-[#c0c8cd]">{grade.extraFindings.map((finding, index) => <li key={index}>{finding}</li>)}</ul></section>}
+            <section className="mt-7 rounded-lg border border-[#ffffff18] bg-[#13191e] p-5 sm:p-6"><p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#aab4ba]">Feedback for your next review</p><p className="mt-3 text-[14px] leading-7 text-[#e0e4e6]">{grade.feedback}</p></section>
+            <details className="mt-4 rounded-lg border border-[#ffffff14] bg-[#12181d] p-4"><summary className="cursor-pointer text-[12px] font-semibold text-[#c7cfd3] focus-visible:outline-2 focus-visible:outline-[#ff9a87]">Read the review you submitted</summary><p className="mt-3 whitespace-pre-wrap text-[12px] leading-6 text-[#aeb8be]">{userReview}</p></details>
+            <div className="mt-8 flex flex-wrap items-center gap-4"><button onClick={handleGenerate} disabled={generating} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87] disabled:opacity-50">{generating ? "Starting another review…" : "Try another review"}</button><a href="/history" className="rounded-md border border-[#ffffff28] px-4 py-3 text-[12px] font-semibold text-[#d0d6da] hover:border-[#ff806a]">Review history</a>{grade.creditsRemaining === 0 && <a href={process.env.NEXT_PUBLIC_GUMROAD_URL || "/pricing"} target={process.env.NEXT_PUBLIC_GUMROAD_URL ? "_blank" : undefined} rel={process.env.NEXT_PUBLIC_GUMROAD_URL ? "noopener noreferrer" : undefined} onClick={() => {captureProductEvent("upgrade_clicked"); if (process.env.NEXT_PUBLIC_GUMROAD_URL) {captureProductEvent("pro_plan_cta_clicked", {provider:"gumroad"});captureProductEvent("checkout_started", {provider:"gumroad"});}}} className="text-[12px] font-semibold text-[#ff9a87] hover:text-white">Keep practicing with Pro <span aria-hidden="true">↗</span></a>}</div>
+            {gradeError && <p role="alert" className="mt-4 text-[12px] text-[#ff9a86]">{gradeError}</p>}
+          </div>
+        </main>
+      ) : (
       <main className="flex flex-1 flex-col overflow-y-auto lg:min-h-0 lg:flex-row lg:overflow-hidden">
         <section
           aria-label="Code change"
@@ -366,21 +351,19 @@ export default function ReviewPage() {
                 <p className="mb-2 text-[15px] font-semibold text-[#e7eaec]">
                   {generateError
                     ? "Exercise generation failed"
-                    : "Start a practice review"}
+                    : !reviewCountLoaded
+                      ? "Ready to review?"
+                      : completedReviews === 0
+                        ? "Your first review is ready."
+                        : "Ready for another review?"}
                 </p>
 
                 <p className="max-w-sm text-[13px] leading-6 text-[#9aa4ab]">
                   {generateError ||
-                    "Choose your interview setup above, then generate a pull request to review."}
+                    "Choose your role, language, and experience level above, then start the review."}
                 </p>
 
-                <button
-                  onClick={handleGenerate}
-                  disabled={generating}
-                  className="mt-5 rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] hover:bg-[#ff927f] disabled:opacity-50"
-                >
-                  {generateError ? "Try again" : "Generate exercise"}
-                </button>
+                {generateError && <button onClick={handleGenerate} disabled={generating} className="mt-5 rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] hover:bg-[#ff927f] disabled:opacity-50">Try again</button>}
               </div>
             )}
 
@@ -466,6 +449,7 @@ export default function ReviewPage() {
           </div>
 
           <textarea
+            aria-label="Your code review"
             value={userReview}
             onChange={(event) =>
               setUserReview(event.target.value.slice(0, 2000))
@@ -541,89 +525,9 @@ export default function ReviewPage() {
             </div>
           )}
 
-          {grade && (
-            <div
-              ref={resultsRef}
-              aria-live="polite"
-              className="max-h-[42vh] space-y-5 overflow-y-auto border-t border-[#273039] px-5 py-5 sm:px-7"
-            >
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ba6ad]">
-                    Review score
-                  </p>
-
-                  <p className="mt-1 text-[34px] font-bold leading-none text-[#ff8b76]">
-                    {grade.score}
-                    <span className="ml-1 text-[17px] font-medium text-[#a4adb3]">
-                      /10
-                    </span>
-                  </p>
-                </div>
-
-                <p className="text-[12px] text-[#b8c0c5]">
-                  {grade.caught.length} of {grade.bugs.length} issues caught
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {grade.bugs.map((bug) => {
-                  const caught = grade.caught.some(
-                    (item) => item.bug === bug.id,
-                  );
-
-                  const feedback = caught
-                    ? grade.caught.find((item) => item.bug === bug.id)?.reason
-                    : grade.missed.find((item) => item.bug === bug.id)?.reason;
-
-                  return (
-                    <div
-                      key={bug.id}
-                      className="border-l-2 border-[#43505a] pl-3"
-                    >
-                      <p
-                        className={`text-[12px] font-semibold ${
-                          caught ? "text-[#a9dfbc]" : "text-[#ff9a86]"
-                        }`}
-                      >
-                        Issue {bug.id} · {caught ? "Caught" : "Missed"}
-                      </p>
-
-                      <p className="mt-1 text-[12px] leading-5 text-[#b1bbc1]">
-                        {feedback || bug.description}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {grade.extraFindings.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ba6ad]">
-                    Additional findings
-                  </p>
-
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] leading-5 text-[#b1bbc1]">
-                    {grade.extraFindings.map((finding, index) => (
-                      <li key={index}>{finding}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ba6ad]">
-                  Interviewer feedback
-                </p>
-
-                <p className="mt-2 text-[13px] leading-6 text-[#d0d5d8]">
-                  {grade.feedback}
-                </p>
-              </div>
-            </div>
-          )}
         </section>
       </main>
+      )}
     </div>
   );
 }

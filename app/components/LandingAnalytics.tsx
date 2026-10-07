@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import posthog from "posthog-js";
+import { useEffect, useRef } from "react";
+import { captureProductEvent } from "@/lib/analytics";
 
 export default function LandingAnalytics() {
+  const tracked = useRef(false);
   useEffect(() => {
-    posthog.capture("landing_viewed");
+    if (tracked.current) return;
+    tracked.current = true;
+    captureProductEvent("landing_viewed");
   }, []);
 
   return null;

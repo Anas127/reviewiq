@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ReviewIQ",
-  description: "Practice code review like a senior engineer.",
+  title: "ReviewIQ — Build code-review judgment",
+  description: "Practice reviewing realistic pull requests, see what you catch and miss, and sharpen your engineering judgment.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

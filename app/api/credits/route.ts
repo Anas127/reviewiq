@@ -6,7 +6,7 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ credits: 0 });
+  if (!user) return NextResponse.json({ credits: 0, completedReviews: 0, userId: null });
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -14,5 +14,10 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  return NextResponse.json({ credits: profile?.credits ?? 0 });
+  const { count } = await supabase
+    .from("reviews")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  return NextResponse.json({ credits: profile?.credits ?? 0, completedReviews: count ?? 0, userId: user.id });
 }

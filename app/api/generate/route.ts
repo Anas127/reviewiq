@@ -202,7 +202,7 @@ ${bug.instruction}`,
       messages: [
         {
           role: "system",
-          content: `You are creating a realistic code review interview exercise.
+          content: `You are creating a realistic code review practice exercise.
 
 The application has already selected exactly 3 defects.
 
@@ -230,7 +230,7 @@ STRICT RULES:
 - Do not write comments saying that something is intentionally broken.
 - The code must look like plausible production code.
 - Adapt the scenario and APIs to the requested role, language, and seniority.
-- Keep the exercise reasonably short enough for an interview code review.
+- Keep the exercise concise enough for one focused code review practice session.
 
 Before responding, silently inspect the final code and ensure that all three required defects are actually implemented.
 
