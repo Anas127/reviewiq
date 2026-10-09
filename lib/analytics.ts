@@ -4,7 +4,7 @@ import posthog from "posthog-js";
 
 type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
-function acquisitionContext() {
+export function acquisitionContext() {
   if (typeof window === "undefined") return {};
   const query = new URLSearchParams(window.location.search);
   const current = {

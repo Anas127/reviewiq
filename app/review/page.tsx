@@ -5,15 +5,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ProductHeader from "@/app/components/ProductHeader";
 import { captureProductEvent, captureProductEventOnce } from "@/lib/analytics";
-const ROLES = [
-  "Backend Engineer",
-  "Frontend Engineer",
-  "Full Stack Engineer",
-  "Data Engineer",
-];
-
-const LANGUAGES = ["Python", "TypeScript", "JavaScript", "Java", "Go"];
-const SENIORITIES = ["Junior", "Mid-level", "Senior"];
+import { LANGUAGES, ROLES, SENIORITIES } from "@/lib/practice-options";
 
 type Grade = {
   score: number;
@@ -58,9 +50,9 @@ function Spinner({
 }
 
 export default function ReviewPage() {
-  const [role, setRole] = useState(ROLES[0]);
-  const [language, setLanguage] = useState(LANGUAGES[0]);
-  const [seniority, setSeniority] = useState(SENIORITIES[1]);
+  const [role, setRole] = useState<string>(ROLES[0]);
+  const [language, setLanguage] = useState<string>(LANGUAGES[0]);
+  const [seniority, setSeniority] = useState<string>(SENIORITIES[1]);
 
   const [code, setCode] = useState("");
   const [exerciseToken, setExerciseToken] = useState("");

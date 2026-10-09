@@ -5,27 +5,28 @@ import TrackedLink from "@/app/components/TrackedLink";
 import { captureProductEventOncePerSession } from "@/lib/analytics";
 import { FREE_REVIEW_CREDITS } from "@/lib/credit-config";
 
-export default function GradedReviewDemo() {
+export default function GradedReviewDemo({ audience = "consumer" }: { audience?: "consumer" | "bootcamps" }) {
   const sectionRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        captureProductEventOncePerSession("graded-review-demo-viewed", "graded_review_demo_viewed");
+        const event = audience === "bootcamps" ? "bootcamps_demo_viewed" : "graded_review_demo_viewed";
+        captureProductEventOncePerSession(event, event);
         observer.disconnect();
       }
     }, { threshold: 0.25 });
     observer.observe(section);
     return () => observer.disconnect();
-  }, []);
+  }, [audience]);
 
   return (
     <section id="graded-review-demo" ref={sectionRef} className="scroll-mt-8 border-y border-[#ffffff12] bg-[#13191e] px-6 py-20 lg:px-10 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-2xl">
-          <p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">A review, then the reveal</p>
-          <h2 className="mt-3 text-[32px] font-semibold tracking-[-1.2px] sm:text-[40px]">Would you have caught this?</h2>
+          <p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">{audience === "bootcamps" ? "See the practice experience" : "A review, then the reveal"}</p>
+          <h2 className="mt-3 text-[32px] font-semibold tracking-[-1.2px] sm:text-[40px]">{audience === "bootcamps" ? "A realistic pull request. A student’s judgment. Immediate feedback." : "Would you have caught this?"}</h2>
           <p className="mt-4 text-[14px] leading-7 text-[#aab4ba]">A short pull request, a realistic review, and a clear comparison with the issues planted in the change.</p>
         </div>
         <div className="mt-9 grid overflow-hidden rounded-xl border border-[#ffffff1a] bg-[#151b20] lg:grid-cols-[1.05fr_.95fr]">
@@ -47,7 +48,7 @@ export default function GradedReviewDemo() {
             </div>
           </div>
         </div>
-        <div className="mt-7 flex flex-wrap items-center gap-4"><TrackedLink href="/login?mode=signup" event="graded_review_demo_cta_clicked" className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Test my review skills — {FREE_REVIEW_CREDITS} free <span className="ml-2" aria-hidden="true">↗</span></TrackedLink><span className="text-[12px] text-[#9aa5ac]">No card required</span></div>
+        <div className="mt-7 flex flex-wrap items-center gap-4"><TrackedLink href={audience === "bootcamps" ? "#pilot-form" : "/login?mode=signup"} event={audience === "bootcamps" ? "bootcamps_pilot_cta_clicked" : "graded_review_demo_cta_clicked"} eventProperties={audience === "bootcamps" ? { placement: "demo" } : undefined} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">{audience === "bootcamps" ? "Bring this practice to your cohort" : `Test my review skills — ${FREE_REVIEW_CREDITS} free`} <span className="ml-2" aria-hidden="true">↗</span></TrackedLink><span className="text-[12px] text-[#9aa5ac]">{audience === "bootcamps" ? "Illustrative review · actual results vary" : "No card required"}</span></div>
       </div>
     </section>
   );

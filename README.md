@@ -20,6 +20,7 @@ There is no separate backend service. Next.js route handlers own generation, gra
 - /api/grade grades the review, then calls the atomic complete_review database function. The function inserts the completed review and deducts one credit in a single transaction.
 - /api/credits returns the signed-in user's balance.
 - /api/webhooks/gumroad accepts Gumroad Ping form events, verifies the product and sale/subscription against Gumroad's API, then calls an idempotent database function.
+- /bootcamps presents the training-program pilot offer and a static review example. /api/bootcamps/pilot validates inquiries and writes them to Supabase with a server-only service role key. A unique submission ID makes retries idempotent.
 
 profiles.credits is the balance. New profiles start with 5 credits. pending_credits holds paid grants for a buyer who has not created a ReviewIQ account yet. A profile insert trigger applies the matching pending balance. payment_events makes each sale/event idempotent, and gumroad_subscriptions records membership status. Cancellation changes future grant eligibility; existing credits remain.
 
@@ -35,6 +36,8 @@ profiles.credits is the balance. New profiles start with 5 credits. pending_cred
 ## Database migration
 
 Before deploying a credit allowance change, apply the migration under supabase/migrations to the Supabase SQL Editor. The current migration keeps the new-profile default at 5 and updates the Gumroad grant function to apply the amount supplied by the canonical application entitlement config.
+
+Before deploying `/bootcamps`, apply `supabase/migrations/20261010000000_bootcamp_pilot_requests.sql` in the Supabase SQL Editor. The `bootcamp_pilot_requests` table has row-level security enabled and is not readable or writable by anonymous or signed-in browser clients. The route uses the existing `SUPABASE_SERVICE_ROLE_KEY` environment variable on the server. Review incoming requests in the Supabase Table Editor and respond manually. No new email provider or B2B account setup is required.
 
 ## Local setup
 
