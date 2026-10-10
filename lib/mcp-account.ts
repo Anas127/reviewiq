@@ -25,9 +25,8 @@ function ai() {
 export async function authenticateMcpAccount(token: string): Promise<McpAccount | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const allowedClientId = process.env.REVIEWIQ_MCP_OAUTH_CLIENT_ID;
   const resource = `${(process.env.NEXT_PUBLIC_SITE_URL || "https://reviewiq-ruby.vercel.app").replace(/\/$/, "")}/mcp`;
-  if (!url || !anonKey || !allowedClientId || !token) return null;
+  if (!url || !anonKey || !token) return null;
 
   const db = createClient(url, anonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -35,9 +34,11 @@ export async function authenticateMcpAccount(token: string): Promise<McpAccount 
   });
   const { data: claimsData, error: claimsError } = await db.auth.getClaims(token);
   if (claimsError || !claimsData?.claims ||
-      claimsData.claims.client_id !== allowedClientId ||
+      typeof claimsData.claims.client_id !== "string" ||
       claimsData.claims.resource !== resource ||
       claimsData.claims.iss !== `${url.replace(/\/$/, "")}/auth/v1`) return null;
+  const { data: trustedResource, error: trustError } = await admin().rpc("reviewiq_mcp_client_resource", { p_client_id: claimsData.claims.client_id });
+  if (trustError || trustedResource !== resource) return null;
   const { data: userData, error: userError } = await db.auth.getUser(token);
   if (userError || !userData.user || userData.user.id !== claimsData.claims.sub) return null;
   return { id: userData.user.id, email: userData.user.email, db };
