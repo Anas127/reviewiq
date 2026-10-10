@@ -14,10 +14,10 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#101418] text-[#f4f5f6]">
       <LandingAnalytics />
-      <nav aria-label="Main navigation" className="relative z-10 mx-auto flex h-[76px] max-w-7xl items-center justify-between px-6 lg:px-10">
+      <nav aria-label="Main navigation" className="relative z-10 mx-auto flex min-h-[76px] max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-3 lg:px-10">
         <Link href="/" className="text-[21px] font-extrabold tracking-[-1.2px]">Review<span className="text-[#ff806a]">IQ</span></Link>
-        <div className="flex items-center gap-5 text-[13px] font-medium text-[#aab2b8] sm:gap-7"><Link className="hidden transition hover:text-white sm:block" href="#method">How it works</Link><Link className="transition hover:text-white" href="/pricing">Pricing</Link></div>
-        <div className="flex items-center gap-3 sm:gap-4"><Link href="/login" className="hidden text-[13px] font-medium text-[#aab2b8] hover:text-white sm:block">Sign in</Link><TrackedLink href="/login?mode=signup" event="hero_primary_clicked" className="rounded-md bg-[#ff806a] px-3 py-2.5 text-[11px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] sm:px-4 sm:text-[12px]">Test my skills <span aria-hidden="true">↗</span></TrackedLink></div>
+        <Link href="/bootcamps" className="order-3 w-full text-[12px] font-semibold text-[#cbd3d7] transition hover:text-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87] sm:order-none sm:w-auto sm:text-[13px]">For Training Programs <span aria-hidden="true" className="text-[#ff806a]">↗</span></Link>
+        <div className="flex items-center gap-3 sm:gap-4"><Link href="/login" className="hidden text-[13px] font-medium text-[#aab2b8] hover:text-white sm:block">Sign in</Link><TrackedLink href="/login?mode=signup" event="hero_primary_clicked" className="rounded-md bg-[#ff806a] px-3 py-2.5 text-[11px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] sm:px-4 sm:text-[12px]">Start Free <span aria-hidden="true">↗</span></TrackedLink></div>
       </nav>
       <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-10 sm:pt-16 lg:grid-cols-[.9fr_1.1fr] lg:px-10 lg:pb-24 lg:pt-14">
         <div className="relative z-[1]">
