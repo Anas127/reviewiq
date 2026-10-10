@@ -1,0 +1,36 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "reviewiq",
+  "version": "0.1.0",
+  "description": "Practice code reviews and get focused feedback on missed issues.",
+  "author": {
+    "name": "Anas Bahraoui",
+    "url": "https://reviewiq-ruby.vercel.app"
+  },
+  "homepage": "https://reviewiq-ruby.vercel.app",
+  "repository": "https://github.com/Anas127/reviewiq",
+  "keywords": ["code review", "developer education", "practice"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "ReviewIQ",
+        "shortDescription": "Practice reviewing code and get focused feedback.",
+        "longDescription": "Review realistic pull requests, write your findings, and see which planted issues you caught or missed.",
+        "developerName": "Anas Bahraoui",
+        "category": "Developer Tools",
+        "capabilities": ["Read", "Write"],
+        "websiteURL": "https://reviewiq-ruby.vercel.app",
+        "supportURL": "https://reviewiq-ruby.vercel.app/support",
+        "privacyPolicyURL": "https://reviewiq-ruby.vercel.app/privacy",
+        "termsOfServiceURL": "https://reviewiq-ruby.vercel.app/terms",
+        "composerIcon": "./assets/reviewiq-logo.png",
+        "logo": "./assets/reviewiq-logo.png",
+        "defaultPrompt": [
+          "Give me a TypeScript code review exercise at mid-level difficulty.",
+          "Grade my ReviewIQ code review and show what I missed."
+        ],
+        "brandColor": "#FF806A"
+      }
+    }
+  }
+}

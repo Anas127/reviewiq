@@ -8,6 +8,8 @@ export type ExerciseBug = {
 
 export type Exercise = {
   userId: string;
+  guestReviewId?: string;
+  mcpAccountReviewId?: string;
   code: string;
   bugs: ExerciseBug[];
   role: string;

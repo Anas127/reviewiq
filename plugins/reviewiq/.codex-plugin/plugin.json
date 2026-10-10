@@ -1,0 +1,17 @@
+{
+  "name": "reviewiq",
+  "version": "0.1.0",
+  "description": "Practice code reviews and get feedback on missed issues.",
+  "author": {
+    "name": "Anas Bahraoui"
+  },
+  "interface": {
+    "displayName": "ReviewIQ",
+    "shortDescription": "Practice reviewing code and get focused feedback.",
+    "longDescription": "Review realistic pull requests, write your findings, and see which planted issues you caught or missed.",
+    "developerName": "Anas Bahraoui",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": "Give me a TypeScript code review exercise at mid-level difficulty."
+  }
+}

@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // The guest MCP endpoint has its own subject-based quota and needs no browser session.
+  if (request.nextUrl.pathname === "/mcp") return NextResponse.next();
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
