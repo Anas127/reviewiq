@@ -49,10 +49,24 @@ export async function guestStart(subject: unknown, config: ExerciseConfig) {
   const id = randomUUID();
   const rawLimit = Number(process.env.CHATGPT_GUEST_DAILY_LIMIT || 100);
   const dailyLimit = Number.isInteger(rawLimit) ? Math.max(1, Math.min(rawLimit, 10000)) : 100;
-  const { data: reservation, error } = await db.rpc("chatgpt_guest_reserve_review", { p_id: id, p_subject_hash: hash, p_daily_limit: dailyLimit });
+  let { data: reservation, error } = await db.rpc("chatgpt_guest_reserve_review", { p_id: id, p_subject_hash: hash, p_daily_limit: dailyLimit });
   if (error) throw error;
+  if (reservation === "active_review") {
+    const { data: active, error: activeError } = await db.from("chatgpt_guest_reviews").select("id,exercise_token,status,created_at").eq("subject_hash", hash).in("status", ["pending", "grading"]).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (activeError) throw activeError;
+    if (active?.exercise_token) {
+      const exercise = openExercise(active.exercise_token, hash);
+      if (exercise && exercise.guestReviewId === active.id) return { code: exercise.code, instruction: "Continue this guest review. Submit your written findings for official ReviewIQ grading." };
+    }
+    if (active?.status === "pending" && Date.now() - new Date(active.created_at).getTime() > 5 * 60_000) {
+      const { error: deleteError } = await db.from("chatgpt_guest_reviews").delete().eq("id", active.id).eq("subject_hash", hash).eq("status", "pending");
+      if (deleteError) throw deleteError;
+      ({ data: reservation, error } = await db.rpc("chatgpt_guest_reserve_review", { p_id: id, p_subject_hash: hash, p_daily_limit: dailyLimit }));
+      if (error) throw error;
+    }
+  }
   if (reservation === "complete_limit") return { limitReached: true, ...handoff() };
-  if (reservation === "active_review") return { error: "You already have a guest review in progress. Submit it before starting another." };
+  if (reservation === "active_review") return { error: "Your previous guest exercise is still being prepared or graded. Please try again shortly." };
   if (reservation === "generation_limit") return { error: "Guest exercise generation is unavailable for this ChatGPT account. Connect a ReviewIQ account to continue.", ...handoff() };
   if (reservation === "daily_limit") return { error: "Guest reviews are at capacity today. Please try again later or connect a ReviewIQ account.", ...handoff() };
   if (reservation !== "reserved") throw new Error("Guest review reservation failed");
