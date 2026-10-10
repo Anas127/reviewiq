@@ -54,24 +54,36 @@ export async function accountStart(account: McpAccount, config: ExerciseConfig) 
   if (creditsRemaining < 1) return { error: "No review credits remain on this ReviewIQ account." };
 
   const db = admin();
+  const { data: active, error: activeError } = await db.from("mcp_account_reviews").select("id,exercise_token,status").eq("user_id", account.id).in("status", ["pending", "grading"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (activeError) throw activeError;
+  if (active?.status === "grading") return { error: "Your previous review is still being graded. Please retry shortly." };
+  if (active?.exercise_token) {
+    const existing = openExercise(active.exercise_token, account.id);
+    if (existing && existing.mcpAccountReviewId === active.id) return { code: existing.code, instruction: "Submit your written findings for official ReviewIQ grading." };
+  }
+  if (active) await db.from("mcp_account_reviews").delete().eq("id", active.id).eq("user_id", account.id).eq("status", "pending");
   const id = randomUUID();
   const { error: insertError } = await db.from("mcp_account_reviews").insert({ id, user_id: account.id });
   if (insertError) throw insertError;
   try {
     const { code, bugs } = await generateExercise(ai(), config);
     const exerciseToken = sealExercise({ ...config, code, bugs, userId: account.id, mcpAccountReviewId: id });
-    return { code, exerciseToken, instruction: "Review this code and submit your written findings with the exercise token for grading." };
+    const { data: stored, error: storeError } = await db.from("mcp_account_reviews").update({ exercise_token: exerciseToken }).eq("id", id).eq("user_id", account.id).eq("status", "pending").select("id").single();
+    if (storeError || !stored) throw storeError || new Error("Could not save account exercise");
+    return { code, instruction: "Review this code and submit your written findings for official ReviewIQ grading." };
   } catch (error) {
     await db.from("mcp_account_reviews").delete().eq("id", id).eq("user_id", account.id).eq("status", "pending");
     throw error;
   }
 }
 
-export async function accountSubmit(account: McpAccount, exerciseToken: string, userReview: string) {
-  const exercise = openExercise(exerciseToken, account.id);
-  if (!exercise?.mcpAccountReviewId) return { error: "This exercise is invalid or expired. Start a new review." };
-
+export async function accountSubmit(account: McpAccount, userReview: string) {
   const db = admin();
+  const { data: active, error: activeError } = await db.from("mcp_account_reviews").select("id,exercise_token").eq("user_id", account.id).in("status", ["pending", "grading"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (activeError) throw activeError;
+  if (!active?.exercise_token) return { error: "No ready account exercise was found. Start a new review." };
+  const exercise = openExercise(active.exercise_token, account.id);
+  if (!exercise?.mcpAccountReviewId || exercise.mcpAccountReviewId !== active.id) return { error: "This exercise is invalid or expired. Start a new review." };
   const reviewId = exercise.mcpAccountReviewId;
   const { data: claim, error: claimError } = await db.rpc("mcp_claim_account_review", { p_id: reviewId, p_user_id: account.id });
   if (claimError) throw claimError;

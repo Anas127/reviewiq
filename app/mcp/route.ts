@@ -34,7 +34,7 @@ function authRequired() {
 function createServer(account: McpAccount | null) {
   const server = new McpServer(
     { name: "reviewiq", version: "1.0.0" },
-    { instructions: "ReviewIQ provides realistic code review practice and grades written findings. Guests can complete two reviews. After that, use the authenticated account tools so users can continue in ChatGPT with their existing ReviewIQ account and credits. Present exercise code without revealing hidden bugs. Never display purchase offers or initiate checkout." },
+    { instructions: "ReviewIQ provides realistic code review practice and grades written findings. Guests can complete two reviews. After that, use the authenticated account tools so users can continue in ChatGPT with their existing ReviewIQ account and credits. Present exercise code without revealing hidden bugs. When a user provides findings, call submit_review or submit_account_review with their written findings. Do not grade their review yourself or claim official grading occurred without a successful tool result. Never display purchase offers or initiate checkout." },
   );
 
   server.registerTool("guest_review_status", {
@@ -65,15 +65,14 @@ function createServer(account: McpAccount | null) {
 
   server.registerTool("submit_review", {
     title: "Grade a ReviewIQ guest review",
-    description: "Grade the user's written review against the hidden planted defects in the exercise token. One guest review is used only after successful grading and saving. Pass the token returned by start_review unchanged.",
+    description: "Submit the user's written findings for official ReviewIQ grading against the active guest exercise. Pass only the user's review text. One guest review is used only after successful grading and saving.",
     inputSchema: {
-      exerciseToken: z.string().min(30).max(30000),
       userReview: z.string().trim().min(1).max(5000),
     },
     _meta: { securitySchemes: [{ type: "noauth" }] },
     annotations: { readOnlyHint: false, openWorldHint: true, destructiveHint: false },
-  }, async ({ exerciseToken, userReview }, context) => {
-    try { return toolResult(await guestSubmit(context._meta?.["openai/subject"], exerciseToken, userReview)); }
+  }, async ({ userReview }, context) => {
+    try { return toolResult(await guestSubmit(context._meta?.["openai/subject"], userReview)); }
     catch (error) { return toolError(error); }
   });
 
@@ -112,13 +111,13 @@ function createServer(account: McpAccount | null) {
 
   server.registerTool("submit_account_review", {
     title: "Grade a ReviewIQ account review",
-    description: "Grade the connected user's review against hidden planted defects. One existing ReviewIQ credit is used only when grading and saving succeed.",
-    inputSchema: { exerciseToken: z.string().min(30).max(30000), userReview: z.string().trim().min(1).max(5000) },
+    description: "Submit the connected user's written findings for official ReviewIQ grading against the active account exercise. Pass only the user's review text. One existing ReviewIQ credit is used only when grading and saving succeed.",
+    inputSchema: { userReview: z.string().trim().min(1).max(5000) },
     _meta: { securitySchemes: [{ type: "oauth2", scopes: [] }] },
     annotations: { readOnlyHint: false, openWorldHint: true, destructiveHint: false },
-  }, async ({ exerciseToken, userReview }) => {
+  }, async ({ userReview }) => {
     if (!account) return authRequired();
-    try { return toolResult(await accountSubmit(account, exerciseToken, userReview)); }
+    try { return toolResult(await accountSubmit(account, userReview)); }
     catch (error) { return toolError(error); }
   });
 

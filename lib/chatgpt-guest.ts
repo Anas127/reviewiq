@@ -60,19 +60,24 @@ export async function guestStart(subject: unknown, config: ExerciseConfig) {
   try {
     const { code, bugs } = await generateExercise(ai, config);
     const exerciseToken = sealExercise({ ...config, code, bugs, userId: hash, guestReviewId: id });
-    return { code, exerciseToken, instruction: "Review this code for correctness, security, and edge cases. Explain the issues you find and their impact. Submit your written review with the exercise token to receive ReviewIQ grading." };
+    const { data: stored, error: storeError } = await db.from("chatgpt_guest_reviews").update({ exercise_token: exerciseToken }).eq("id", id).eq("subject_hash", hash).eq("status", "pending").select("id").single();
+    if (storeError || !stored) throw storeError || new Error("Could not save guest exercise");
+    return { code, instruction: "Review this code for correctness, security, and edge cases. Explain the issues you find and their impact. Submit your written review for official ReviewIQ grading." };
   } catch (cause) {
     await db.from("chatgpt_guest_reviews").delete().eq("id", id).eq("subject_hash", hash).eq("status", "pending");
     throw cause;
   }
 }
 
-export async function guestSubmit(subject: unknown, exerciseToken: string, userReview: string) {
+export async function guestSubmit(subject: unknown, userReview: string) {
   const { db, ai, hashSecret } = services();
   const hash = subjectHash(subject, hashSecret);
   if (!hash) return { error: "ChatGPT did not provide a user identifier. Guest reviews are unavailable in this client." };
-  const exercise = openExercise(exerciseToken, hash);
-  if (!exercise?.guestReviewId) return { error: "This guest exercise is invalid or expired. Start a new one." };
+  const { data: active, error: activeError } = await db.from("chatgpt_guest_reviews").select("id,exercise_token,status").eq("subject_hash", hash).in("status", ["pending", "grading"]).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (activeError) throw activeError;
+  if (!active?.exercise_token) return { error: "No ready guest exercise was found. Start a new review." };
+  const exercise = openExercise(active.exercise_token, hash);
+  if (!exercise?.guestReviewId || exercise.guestReviewId !== active.id) return { error: "This guest exercise is invalid or expired. Start a new one." };
   const { data: claim, error: claimError } = await db.rpc("chatgpt_guest_claim_review", { p_id: exercise.guestReviewId, p_subject_hash: hash });
   if (claimError) throw claimError;
   if (claim === "complete") {
