@@ -7,7 +7,7 @@
   },
   "interface": {
     "displayName": "ReviewIQ",
-    "shortDescription": "Practice reviewing code and get focused feedback.",
+    "shortDescription": "Practice code reviews",
     "longDescription": "Review realistic pull requests, write your findings, and see which planted issues you caught or missed.",
     "developerName": "Anas Bahraoui",
     "category": "Developer Tools",
