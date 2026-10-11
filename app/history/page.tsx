@@ -11,6 +11,7 @@ type Review = {
   role: string;
   language: string;
   seniority: string;
+  exercise_description: string | null;
   score: number;
   caught: (number | { bug: number; reason: string })[];
   missed: (
@@ -174,6 +175,13 @@ export default function HistoryPage() {
                   </p>
                 </div>
               </div>
+
+              {selected.exercise_description && (
+                <section className="rounded-lg border border-[#ffffff18] bg-[#13191e] p-5">
+                  <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[#89959d]">Exercise context</h3>
+                  <p className="text-[13px] leading-6 text-[#c2cbd0]">{selected.exercise_description}</p>
+                </section>
+              )}
 
               {/* Progress */}
               <div className="h-[3px] bg-[#1f1f1f] rounded-full">

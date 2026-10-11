@@ -108,6 +108,7 @@ export async function accountSubmit(account: McpAccount, userReview: string) {
     p_role: exercise.role,
     p_language: exercise.language,
     p_seniority: exercise.seniority,
+    p_exercise_description: exercise.description ?? null,
     p_code: exercise.code,
     p_bugs: exercise.bugs,
     p_user_review: userReview,

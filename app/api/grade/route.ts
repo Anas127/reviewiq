@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     p_role: role,
     p_language: language,
     p_seniority: seniority,
+    p_exercise_description: exercise.description ?? null,
     p_code: code,
     p_bugs: bugs,
     p_user_review: userReview,
