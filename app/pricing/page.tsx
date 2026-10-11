@@ -35,13 +35,13 @@ export default function PricingPage() {
               <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff9a87]">ReviewIQ Pro · deliberate repetition</p>
               <div className="mt-5 flex items-baseline gap-2"><span className="text-[44px] font-semibold tracking-[-2px]">{PRO_PRICE_USD}</span><span className="text-[12px] text-[#aab4ba]">/ month</span></div>
               <p className="mt-2 min-h-12 text-[13px] leading-6 text-[#c0c8cd]">Keep practicing and build a deeper review history.</p>
-              {gumroadUrl ? <UpgradeButton href={gumroadUrl} /> : <TrackedLink href="/login" event="pro_plan_cta_clicked" className="mt-7 rounded-md bg-[#ff806a] py-3 text-center text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87]">Sign in to upgrade <span className="ml-2">↗</span></TrackedLink>}
+              {gumroadUrl ? <UpgradeButton /> : <TrackedLink href="/login" event="pro_plan_cta_clicked" className="mt-7 rounded-md bg-[#ff806a] py-3 text-center text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87]">Sign in to upgrade <span className="ml-2">↗</span></TrackedLink>}
               <ul className="mt-7 space-y-3.5 border-t border-[#ffffff18] pt-6 text-[13px] leading-5 text-[#e0e4e6]">
                 {[`${PRO_CREDITS_PER_BILLING_CYCLE} new review credits each billing cycle`, "Unused credits roll over", "Detailed feedback and full review history", "All supported roles, languages, and experience levels", "Cancel to stop future credit grants; keep existing credits"].map((item) => <li key={item} className="flex gap-3"><span aria-hidden="true" className="text-[#ff927e]">✓</span><span>{item}</span></li>)}
               </ul>
             </article>
           </div>
-          <p className="mx-auto mt-7 max-w-2xl text-center text-[12px] leading-6 text-[#9ba6ad]">Gumroad securely handles payment. ReviewIQ adds credits after a verified subscription payment; a credit is used only when your review is graded and saved successfully.</p>
+          <p className="mx-auto mt-7 max-w-2xl text-center text-[12px] leading-6 text-[#9ba6ad]">Gumroad securely handles payment. Use your ReviewIQ account email at checkout so the credits reach your account. ReviewIQ adds credits after a verified subscription payment; a credit is used only when your review is graded and saved successfully.</p>
         </div>
       </section>
       <footer className="border-t border-[#ffffff12] px-6 py-6 text-center text-[11px] text-[#89949b]">Review<span className="font-bold text-[#d8dcde]">IQ</span> · Deliberate practice for code-review judgment.</footer>

@@ -56,7 +56,7 @@ export async function guestStart(subject: unknown, config: ExerciseConfig) {
     if (activeError) throw activeError;
     if (active?.exercise_token) {
       const exercise = openExercise(active.exercise_token, hash);
-      if (exercise && exercise.guestReviewId === active.id) return { code: exercise.code, instruction: "Continue this guest review. Submit your written findings for official ReviewIQ grading." };
+      if (exercise && exercise.guestReviewId === active.id) return { description: exercise.description, code: exercise.code, instruction: "Continue this guest review. Submit your written findings for official ReviewIQ grading." };
     }
     if (active?.status === "pending" && Date.now() - new Date(active.created_at).getTime() > 5 * 60_000) {
       const { error: deleteError } = await db.from("chatgpt_guest_reviews").delete().eq("id", active.id).eq("subject_hash", hash).eq("status", "pending");
@@ -72,11 +72,11 @@ export async function guestStart(subject: unknown, config: ExerciseConfig) {
   if (reservation !== "reserved") throw new Error("Guest review reservation failed");
 
   try {
-    const { code, bugs } = await generateExercise(ai, config);
-    const exerciseToken = sealExercise({ ...config, code, bugs, userId: hash, guestReviewId: id });
+    const { description, code, bugs } = await generateExercise(ai, config);
+    const exerciseToken = sealExercise({ ...config, description, code, bugs, userId: hash, guestReviewId: id });
     const { data: stored, error: storeError } = await db.from("chatgpt_guest_reviews").update({ exercise_token: exerciseToken }).eq("id", id).eq("subject_hash", hash).eq("status", "pending").select("id").single();
     if (storeError || !stored) throw storeError || new Error("Could not save guest exercise");
-    return { code, instruction: "Review this code for correctness, security, and edge cases. Explain the issues you find and their impact. Submit your written review for official ReviewIQ grading." };
+    return { description, code, instruction: "Review this code for correctness, security, and edge cases. Explain the issues you find and their impact. Submit your written review for official ReviewIQ grading." };
   } catch (cause) {
     await db.from("chatgpt_guest_reviews").delete().eq("id", id).eq("subject_hash", hash).eq("status", "pending");
     throw cause;

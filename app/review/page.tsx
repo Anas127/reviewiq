@@ -55,6 +55,7 @@ export default function ReviewPage() {
   const [seniority, setSeniority] = useState<string>(SENIORITIES[1]);
 
   const [code, setCode] = useState("");
+  const [description, setDescription] = useState("");
   const [exerciseToken, setExerciseToken] = useState("");
   const [userReview, setUserReview] = useState("");
   const [grade, setGrade] = useState<Grade | null>(null);
@@ -110,6 +111,7 @@ export default function ReviewPage() {
     setGrade(null);
     setUserReview("");
     setCode("");
+    setDescription("");
     setExerciseToken("");
     setGenerateError("");
     setGradeError("");
@@ -140,6 +142,7 @@ export default function ReviewPage() {
       }
 
       setCode(data.code);
+      setDescription(data.description ?? "");
       setExerciseToken(data.exerciseToken);
       captureProductEvent("exercise_generated", {
         role,
@@ -309,7 +312,7 @@ export default function ReviewPage() {
             {grade.extraFindings.length > 0 && <section className="mt-7 rounded-lg border border-[#ffffff18] bg-[#13191e] p-5"><h2 className="text-[12px] font-semibold text-[#e7eaec]">Additional findings</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-[12px] leading-5 text-[#c0c8cd]">{grade.extraFindings.map((finding, index) => <li key={index}>{finding}</li>)}</ul></section>}
             <section className="mt-7 rounded-lg border border-[#ffffff18] bg-[#13191e] p-5 sm:p-6"><p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#aab4ba]">Feedback for your next review</p><p className="mt-3 text-[14px] leading-7 text-[#e0e4e6]">{grade.feedback}</p></section>
             <details className="mt-4 rounded-lg border border-[#ffffff14] bg-[#12181d] p-4"><summary className="cursor-pointer text-[12px] font-semibold text-[#c7cfd3] focus-visible:outline-2 focus-visible:outline-[#ff9a87]">Read the review you submitted</summary><p className="mt-3 whitespace-pre-wrap text-[12px] leading-6 text-[#aeb8be]">{userReview}</p></details>
-            <div className="mt-8 flex flex-wrap items-center gap-4"><button onClick={handleGenerate} disabled={generating} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87] disabled:opacity-50">{generating ? "Starting another review…" : "Try another review"}</button><a href="/history" className="rounded-md border border-[#ffffff28] px-4 py-3 text-[12px] font-semibold text-[#d0d6da] hover:border-[#ff806a]">Review history</a>{grade.creditsRemaining === 0 && <a href={process.env.NEXT_PUBLIC_GUMROAD_URL || "/pricing"} target={process.env.NEXT_PUBLIC_GUMROAD_URL ? "_blank" : undefined} rel={process.env.NEXT_PUBLIC_GUMROAD_URL ? "noopener noreferrer" : undefined} onClick={() => {captureProductEvent("upgrade_clicked"); if (process.env.NEXT_PUBLIC_GUMROAD_URL) {captureProductEvent("pro_plan_cta_clicked", {provider:"gumroad"});captureProductEvent("checkout_started", {provider:"gumroad"});}}} className="text-[12px] font-semibold text-[#ff9a87] hover:text-white">Keep practicing with Pro <span aria-hidden="true">↗</span></a>}</div>
+            <div className="mt-8 flex flex-wrap items-center gap-4"><button onClick={handleGenerate} disabled={generating} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87] disabled:opacity-50">{generating ? "Starting another review…" : "Try another review"}</button><a href="/history" className="rounded-md border border-[#ffffff28] px-4 py-3 text-[12px] font-semibold text-[#d0d6da] hover:border-[#ff806a]">Review history</a>{grade.creditsRemaining === 0 && <a href={process.env.NEXT_PUBLIC_GUMROAD_URL ? "/api/checkout" : "/pricing"} target={process.env.NEXT_PUBLIC_GUMROAD_URL ? "_blank" : undefined} rel={process.env.NEXT_PUBLIC_GUMROAD_URL ? "noopener noreferrer" : undefined} onClick={() => {captureProductEvent("upgrade_clicked"); if (process.env.NEXT_PUBLIC_GUMROAD_URL) {captureProductEvent("pro_plan_cta_clicked", {provider:"gumroad"});captureProductEvent("checkout_started", {provider:"gumroad"});}}} className="text-[12px] font-semibold text-[#ff9a87] hover:text-white">Keep practicing with Pro <span aria-hidden="true">↗</span></a>}</div>
             {gradeError && <p role="alert" className="mt-4 text-[12px] text-[#ff9a86]">{gradeError}</p>}
           </div>
         </main>
@@ -377,6 +380,7 @@ export default function ReviewPage() {
               </div>
             )}
 
+            {description && <p className="mb-5 max-w-3xl text-[13px] leading-6 text-[#b9c3c9]">{description}</p>}
             {code && (
               <div className="min-w-max font-mono text-[13px] leading-7 sm:text-[14px]">
                 {code.split("\n").map((line, index) => (

@@ -50,7 +50,7 @@ function createServer(account: McpAccount | null) {
 
   server.registerTool("start_review", {
     title: "Start a ReviewIQ code review",
-    description: "Generate a realistic code review exercise for the user's selected role, language, and seniority. Requires a ChatGPT user identifier. No guest review is used until grading completes.",
+    description: "Generate a realistic code review exercise for the user's selected role, language, and seniority. Present the returned description above the code without revealing hidden bugs. Requires a ChatGPT user identifier. No guest review is used until grading completes.",
     inputSchema: {
       role: z.enum(ROLES),
       language: z.enum(LANGUAGES),
@@ -99,7 +99,7 @@ function createServer(account: McpAccount | null) {
 
   server.registerTool("start_account_review", {
     title: "Start a ReviewIQ account review",
-    description: "Generate a realistic code review exercise using the connected ReviewIQ account. Requires at least one existing review credit; generation alone does not consume it.",
+    description: "Generate a realistic code review exercise using the connected ReviewIQ account. Present the returned description above the code without revealing hidden bugs. Requires at least one existing review credit; generation alone does not consume it.",
     inputSchema: { role: z.enum(ROLES), language: z.enum(LANGUAGES), seniority: z.enum(SENIORITIES) },
     _meta: { securitySchemes: [{ type: "oauth2", scopes: [] }] },
     annotations: { readOnlyHint: false, openWorldHint: true, destructiveHint: false },

@@ -32,7 +32,7 @@ function pickRandomBugs(count: number) {
 
 export type ExerciseConfig = { role: string; language: string; seniority: string };
 
-export async function generateExercise(client: OpenAI, config: ExerciseConfig): Promise<{ code: string; bugs: ExerciseBug[] }> {
+export async function generateExercise(client: OpenAI, config: ExerciseConfig): Promise<{ description: string; code: string; bugs: ExerciseBug[] }> {
   const selectedBugs = pickRandomBugs(3);
   const requiredBugs = selectedBugs.map((bug, index) => `BUG ${index + 1} — ${bug.key}\n${bug.instruction}`).join("\n\n");
   const response = await client.chat.completions.create({
@@ -68,12 +68,15 @@ STRICT RULES:
 - The code must look like plausible production code.
 - Adapt the scenario and APIs to the requested role, language, and seniority.
 - Keep the exercise concise enough for one focused code review practice session.
+- Write a 1–3 sentence plain-language description of what this change is meant to do and why.
+- Keep the description consistent with the code, but do not reveal or hint at any planted defect.
 
 Before responding, silently inspect the final code and ensure that all three required defects are actually implemented.
 
 Respond ONLY with valid JSON:
 
 {
+  "description": "1–3 plain sentences describing the intended change and its purpose",
   "code": "the complete exercise code",
   "evidence": [
     {
@@ -99,12 +102,12 @@ No code fences.` },
     response_format: { type: "json_object" },
   });
   const generated = JSON.parse(response.choices[0]?.message?.content ?? "null");
-  if (typeof generated?.code !== "string" || !generated.code.trim() || !Array.isArray(generated.evidence) || generated.evidence.length !== 3) throw new Error("Generated exercise has invalid structure");
+  if (typeof generated?.description !== "string" || !generated.description.trim() || generated.description.length > 600 || typeof generated.code !== "string" || !generated.code.trim() || !Array.isArray(generated.evidence) || generated.evidence.length !== 3) throw new Error("Generated exercise has invalid structure");
   for (let i = 0; i < 3; i++) {
     const evidence = generated.evidence[i];
     if (evidence?.bug !== i + 1 || typeof evidence.line !== "string" || !evidence.line.trim() || !generated.code.includes(evidence.line)) throw new Error("Generated exercise has invalid evidence");
   }
-  return { code: generated.code, bugs: selectedBugs.map((pattern, index) => ({ id: index + 1, line: generated.evidence[index].line, description: pattern.groundTruth })) };
+  return { description: generated.description.trim(), code: generated.code, bugs: selectedBugs.map((pattern, index) => ({ id: index + 1, line: generated.evidence[index].line, description: pattern.groundTruth })) };
 }
 
 type CaughtIssue = { bug: number; reason: string };

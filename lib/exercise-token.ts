@@ -10,6 +10,7 @@ export type Exercise = {
   userId: string;
   guestReviewId?: string;
   mcpAccountReviewId?: string;
+  description?: string;
   code: string;
   bugs: ExerciseBug[];
   role: string;
@@ -57,6 +58,7 @@ export function openExercise(token: string, userId: string): Exercise | null {
       parsed.userId !== userId ||
       typeof parsed.expiresAt !== "number" ||
       parsed.expiresAt < Date.now() ||
+      (parsed.description !== undefined && typeof parsed.description !== "string") ||
       typeof parsed.code !== "string" ||
       !Array.isArray(parsed.bugs)
     ) {

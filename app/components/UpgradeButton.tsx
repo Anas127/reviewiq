@@ -3,11 +3,7 @@
 import { captureProductEvent } from "@/lib/analytics";
 import { PRO_CREDITS_PER_BILLING_CYCLE } from "@/lib/credit-config";
 
-type UpgradeButtonProps = {
-  href: string;
-};
-
-export default function UpgradeButton({ href }: UpgradeButtonProps) {
+export default function UpgradeButton() {
   function handleClick() {
     captureProductEvent("pro_plan_cta_clicked", { provider: "gumroad" });
     captureProductEvent("upgrade_clicked", { provider: "gumroad" });
@@ -16,7 +12,7 @@ export default function UpgradeButton({ href }: UpgradeButtonProps) {
 
   return (
     <a
-      href={href}
+      href="/api/checkout"
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}

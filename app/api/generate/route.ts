@@ -26,9 +26,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid exercise configuration" }, { status: 400 });
     }
 
-    const { code, bugs } = await generateExercise(new OpenAI({ apiKey }), { role, language, seniority });
-    const exerciseToken = sealExercise({ userId: user.id, code, bugs, role, language, seniority });
-    return NextResponse.json({ code, exerciseToken });
+    const { description, code, bugs } = await generateExercise(new OpenAI({ apiKey }), { role, language, seniority });
+    const exerciseToken = sealExercise({ userId: user.id, description, code, bugs, role, language, seniority });
+    return NextResponse.json({ description, code, exerciseToken });
   } catch (error) {
     console.error("Exercise generation failed:", error);
     return NextResponse.json({ error: "Exercise generation is temporarily unavailable." }, { status: 500 });
