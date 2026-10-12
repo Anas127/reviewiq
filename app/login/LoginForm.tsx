@@ -84,14 +84,16 @@ export default function LoginForm({ initialMode, returnTo, authError = false }: 
         return;
       }
       if (data.user) identifyProductUser(data.user.id, data.user.created_at);
-      router.push(returnTo || "/review");
+      if (returnTo === "/api/checkout") window.location.assign(returnTo);
+      else router.push(returnTo || "/review");
       return;
     }
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) { setError(signInError.message); setLoading(false); return; }
     if (data.user) identifyProductUser(data.user.id, data.user.created_at);
     captureProductEvent("signin_completed");
-    router.push(returnTo || "/review");
+    if (returnTo === "/api/checkout") window.location.assign(returnTo);
+    else router.push(returnTo || "/review");
   }
 
   async function sendPasswordReset() {

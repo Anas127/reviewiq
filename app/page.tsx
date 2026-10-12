@@ -16,6 +16,7 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const startHref = user ? "/review" : "/login?mode=signup&redirect=%2Freview";
+  const proHref = user ? "/pricing" : "/login?mode=signup&redirect=%2Fpricing";
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#101418] text-[#f4f5f6]">
@@ -60,8 +61,8 @@ export default async function Home() {
       </section>
       <section className="border-y border-[#ffffff12] bg-[#13191e] px-6 py-16 lg:px-10">
         <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[1fr_auto] md:items-center">
-          <div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff927e]">Pro</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">Keep practicing after your first five.</h2><p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#aab4ba]">Get {PRO_CREDITS_PER_BILLING_CYCLE} more reviews each billing cycle for {PRO_PRICE_USD}/month. Practice across supported languages and levels, and revisit your feedback in History.</p></div>
-          <Link href="/pricing" className="rounded-md bg-[#ff806a] px-5 py-3 text-center text-[13px] font-bold text-[#1d1715] hover:bg-[#ff9a87]">See Pro</Link>
+          <div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff927e]">Pro</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">Catch what you missed last time.</h2><p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#aab4ba]">Your first reviews show which bugs you overlook. Keep practicing with fresh exercises in your chosen language and level, then compare your findings with the feedback.</p><p className="mt-4 text-[12px] font-semibold text-[#e0e4e6]">{PRO_CREDITS_PER_BILLING_CYCLE} reviews each billing cycle · {PRO_PRICE_USD}/month</p></div>
+          <Link href={proHref} className="rounded-md bg-[#ff806a] px-5 py-3 text-center text-[13px] font-bold text-[#1d1715] hover:bg-[#ff9a87]">Get Pro</Link>
         </div>
       </section>
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ffffff12] px-6 py-6 text-[11px] text-[#89949b] lg:px-10"><Link href="/" className="font-extrabold tracking-[-.7px] text-[#d8dcde]">Review<span className="text-[#ff806a]">IQ</span></Link><span>Code review practice for developers.</span><Link href="/bootcamps" className="hover:text-white">For training programs</Link><Link href="/privacy" className="hover:text-white">Privacy</Link><span>© 2026 ReviewIQ</span></footer>

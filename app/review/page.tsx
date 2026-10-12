@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ProductHeader from "@/app/components/ProductHeader";
 import { captureProductEvent, captureProductEventOnce, identifyProductUser } from "@/lib/analytics";
+import { PRO_CREDITS_PER_BILLING_CYCLE, PRO_PRICE_USD } from "@/lib/credit-config";
 import { LANGUAGES, ROLES, SENIORITIES } from "@/lib/practice-options";
 
 type Grade = {
@@ -68,6 +69,7 @@ export default function ReviewPage() {
   const [userId, setUserId] = useState("");
 
   const [generateError, setGenerateError] = useState("");
+  const [outOfCredits, setOutOfCredits] = useState(false);
   const [gradeError, setGradeError] = useState("");
 
 
@@ -115,6 +117,7 @@ export default function ReviewPage() {
     setDescription("");
     setExerciseToken("");
     setGenerateError("");
+    setOutOfCredits(false);
     setGradeError("");
 
     try {
@@ -133,9 +136,10 @@ export default function ReviewPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        setOutOfCredits(response.status === 402);
         setGenerateError(
           response.status === 402
-            ? "No credits left. Upgrade to ReviewIQ Pro to continue."
+            ? `Keep practicing with ${PRO_CREDITS_PER_BILLING_CYCLE} more reviews each billing cycle for ${PRO_PRICE_USD}/month.`
             : (data.error ?? "Couldn't generate an exercise. Try again."),
         );
 
@@ -313,7 +317,8 @@ export default function ReviewPage() {
             {grade.extraFindings.length > 0 && <section className="mt-7 rounded-lg border border-[#ffffff18] bg-[#13191e] p-5"><h2 className="text-[12px] font-semibold text-[#e7eaec]">Additional findings</h2><ul className="mt-3 list-disc space-y-2 pl-5 text-[12px] leading-5 text-[#c0c8cd]">{grade.extraFindings.map((finding, index) => <li key={index}>{finding}</li>)}</ul></section>}
             <section className="mt-7 rounded-lg border border-[#ffffff18] bg-[#13191e] p-5 sm:p-6"><p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#aab4ba]">Feedback for your next review</p><p className="mt-3 text-[14px] leading-7 text-[#e0e4e6]">{grade.feedback}</p></section>
             <details className="mt-4 rounded-lg border border-[#ffffff14] bg-[#12181d] p-4"><summary className="cursor-pointer text-[12px] font-semibold text-[#c7cfd3] focus-visible:outline-2 focus-visible:outline-[#ff9a87]">Read the review you submitted</summary><p className="mt-3 whitespace-pre-wrap text-[12px] leading-6 text-[#aeb8be]">{userReview}</p></details>
-            <div className="mt-8 flex flex-wrap items-center gap-4"><button onClick={handleGenerate} disabled={generating} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87] disabled:opacity-50">{generating ? "Starting another review…" : "Try another review"}</button><a href="/history" className="rounded-md border border-[#ffffff28] px-4 py-3 text-[12px] font-semibold text-[#d0d6da] hover:border-[#ff806a]">Review history</a>{grade.creditsRemaining === 0 && <a href={process.env.NEXT_PUBLIC_GUMROAD_URL ? "/api/checkout" : "/pricing"} target={process.env.NEXT_PUBLIC_GUMROAD_URL ? "_blank" : undefined} rel={process.env.NEXT_PUBLIC_GUMROAD_URL ? "noopener noreferrer" : undefined} onClick={() => {captureProductEvent("upgrade_clicked"); if (process.env.NEXT_PUBLIC_GUMROAD_URL) {captureProductEvent("pro_plan_cta_clicked", {provider:"gumroad"});captureProductEvent("checkout_started", {provider:"gumroad"});}}} className="text-[12px] font-semibold text-[#ff9a87] hover:text-white">Keep practicing with Pro <span aria-hidden="true">↗</span></a>}</div>
+            <div className="mt-8 flex flex-wrap items-center gap-4"><button onClick={handleGenerate} disabled={generating} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#201715] transition hover:bg-[#ff9a87] disabled:opacity-50">{generating ? "Starting another review…" : "Try another review"}</button><a href="/history" className="rounded-md border border-[#ffffff28] px-4 py-3 text-[12px] font-semibold text-[#d0d6da] hover:border-[#ff806a]">Review history</a>{grade.creditsRemaining === 0 && <a href={process.env.NEXT_PUBLIC_GUMROAD_URL ? "/api/checkout" : "/pricing"} target={process.env.NEXT_PUBLIC_GUMROAD_URL ? "_blank" : undefined} rel={process.env.NEXT_PUBLIC_GUMROAD_URL ? "noopener noreferrer" : undefined} onClick={() => {captureProductEvent("upgrade_clicked"); if (process.env.NEXT_PUBLIC_GUMROAD_URL) {captureProductEvent("pro_plan_cta_clicked", {provider:"gumroad"});captureProductEvent("checkout_started", {provider:"gumroad"});}}} className="text-[12px] font-semibold text-[#ff9a87] hover:text-white">Continue with Pro <span aria-hidden="true">↗</span></a>}</div>
+            {grade.creditsRemaining === 0 && <div className="mt-4"><h2 className="text-[15px] font-semibold text-[#e7eaec]">Ready for your next review?</h2><p className="mt-1 text-[12px] leading-5 text-[#aab4ba]">Keep practicing with {PRO_CREDITS_PER_BILLING_CYCLE} more reviews each billing cycle for {PRO_PRICE_USD}/month.</p></div>}
             {gradeError && <p role="alert" className="mt-4 text-[12px] text-[#ff9a86]">{gradeError}</p>}
           </div>
         </main>
@@ -346,7 +351,7 @@ export default function ReviewPage() {
               <div className="flex min-h-72 flex-col items-center justify-center text-center">
                 <p className="mb-2 text-[15px] font-semibold text-[#e7eaec]">
                   {generateError
-                    ? "Exercise generation failed"
+                    ? outOfCredits ? "Ready for your next review?" : "Exercise generation failed"
                     : !reviewCountLoaded
                       ? "Ready to review?"
                       : completedReviews === 0
@@ -359,7 +364,7 @@ export default function ReviewPage() {
                     "Choose your role, language, and experience level above, then start the review."}
                 </p>
 
-                {generateError && <button onClick={handleGenerate} disabled={generating} className="mt-5 rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] hover:bg-[#ff927f] disabled:opacity-50">Try again</button>}
+                {generateError && !outOfCredits && <button onClick={handleGenerate} disabled={generating} className="mt-5 rounded-md bg-[#ff765f] px-4 py-2.5 text-[13px] font-bold text-[#171310] hover:bg-[#ff927f] disabled:opacity-50">Try again</button>}
               </div>
             )}
 

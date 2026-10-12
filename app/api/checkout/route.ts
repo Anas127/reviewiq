@@ -8,7 +8,14 @@ export async function GET(request: Request) {
   const checkoutUrl = new URL(configuredUrl);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (user?.email) checkoutUrl.searchParams.set("email", user.email);
+  if (!user?.email) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", "/api/checkout");
+    const response = NextResponse.redirect(loginUrl, 303);
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
+  checkoutUrl.searchParams.set("email", user.email);
 
   const response = NextResponse.redirect(checkoutUrl, 303);
   response.headers.set("Cache-Control", "private, no-store");

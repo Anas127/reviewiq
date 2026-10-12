@@ -7,6 +7,6 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const initialMode = params.mode === "signup" ? "signup" : params.mode === "reset" ? "reset" : "signin";
-  const returnTo = params.redirect === "/review" || params.redirect?.startsWith("/oauth/consent?authorization_id=") ? params.redirect : undefined;
+  const returnTo = params.redirect === "/review" || params.redirect === "/pricing" || params.redirect === "/api/checkout" || params.redirect?.startsWith("/oauth/consent?authorization_id=") ? params.redirect : undefined;
   return <LoginForm initialMode={initialMode} returnTo={returnTo} authError={params.auth_error === "1"} />;
 }

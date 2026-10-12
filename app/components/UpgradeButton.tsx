@@ -1,7 +1,6 @@
 "use client";
 
 import { captureProductEvent } from "@/lib/analytics";
-import { PRO_CREDITS_PER_BILLING_CYCLE } from "@/lib/credit-config";
 
 export default function UpgradeButton() {
   function handleClick() {
@@ -18,7 +17,7 @@ export default function UpgradeButton() {
       onClick={handleClick}
       className="mt-7 rounded-md bg-[#ff806a] py-3 text-center text-[12px] font-bold text-[#201715] transition hover:bg-[#ff9a87]"
     >
-      Unlock {PRO_CREDITS_PER_BILLING_CYCLE} reviews <span className="ml-2">↗</span>
+      Continue with Pro <span className="ml-2">↗</span>
     </a>
   );
 }
