@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import TrackedLink from "@/app/components/TrackedLink";
 import { captureProductEventOncePerSession } from "@/lib/analytics";
 import { FREE_REVIEW_CREDITS } from "@/lib/credit-config";
 
 export default function GradedReviewDemo({ audience = "consumer" }: { audience?: "consumer" | "bootcamps" }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const [revealed, setRevealed] = useState(false);
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -25,17 +26,19 @@ export default function GradedReviewDemo({ audience = "consumer" }: { audience?:
     <section id="graded-review-demo" ref={sectionRef} className="scroll-mt-8 border-y border-[#ffffff12] bg-[#13191e] px-6 py-20 lg:px-10 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-2xl">
-          <p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">{audience === "bootcamps" ? "See the practice experience" : "A review, then the reveal"}</p>
-          <h2 className="mt-3 text-[32px] font-semibold tracking-[-1.2px] sm:text-[40px]">{audience === "bootcamps" ? "A realistic pull request. A student’s judgment. Immediate feedback." : "Would you have caught this?"}</h2>
-          <p className="mt-4 text-[14px] leading-7 text-[#aab4ba]">A short pull request, a realistic review, and a clear comparison with the issues planted in the change.</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">{audience === "bootcamps" ? "See the practice experience" : "Graded-review demo"}</p>
+          <h2 className="mt-3 text-[32px] font-semibold tracking-[-1.2px] sm:text-[40px]">{audience === "bootcamps" ? "A realistic pull request. A student’s judgment. Immediate feedback." : "How many bugs would you miss?"}</h2>
+          <p className="mt-4 text-[14px] leading-7 text-[#aab4ba]">{audience === "bootcamps" ? "A short pull request, a realistic review, and a clear comparison with the issues planted in the change." : "Read the code before revealing the sample review. Then compare your findings with the score and feedback."}</p>
         </div>
         <div className="mt-9 grid overflow-hidden rounded-xl border border-[#ffffff1a] bg-[#151b20] lg:grid-cols-[1.05fr_.95fr]">
-          <div className="border-b border-[#ffffff12] p-5 sm:p-7 lg:border-b-0 lg:border-r">
+          <div className="min-w-0 border-b border-[#ffffff12] p-5 sm:p-7 lg:border-b-0 lg:border-r">
             <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[11px] text-[#89959d]">Pull request · account service</p><h3 className="mt-1 text-[15px] font-semibold">Update account handling</h3></div><span className="rounded border border-[#ffffff20] px-2 py-1 text-[10px] text-[#c1c9ce]">Python · 2 issues planted</span></div>
             <pre tabIndex={0} aria-label="Example Python diff with two planted issues" className="mt-5 max-h-64 overflow-auto rounded-md border border-[#ffffff10] bg-[#0e1317] p-4 font-mono text-[11px] leading-6 text-[#c8d0d4] sm:text-[12px]"><code><span className="block">def find_account(email, accounts):</span><span className="block bg-[#d9664b14] text-[#d2a197]">-    account = accounts.get(email.strip().lower())</span><span className="block bg-[#72bd8b12] text-[#9fc4aa]">+    account = accounts.get(email)</span><span className="block">    if account is None: return None</span><span className="block">    return account</span><span className="mt-3 block">def deactivate(account, db):</span><span className="block bg-[#d9664b14] text-[#d2a197]">-    if not db.save(account): return False</span><span className="block bg-[#72bd8b12] text-[#9fc4aa]">+    account.active = False</span><span className="block bg-[#72bd8b12] text-[#9fc4aa]">+    db.save(account)</span><span className="block bg-[#72bd8b12] text-[#9fc4aa]">+    return True</span></code></pre>
             <p className="mt-3 text-[11px] leading-5 text-[#89959d]">Review the change and explain each risk, its impact, and a practical fix.</p>
+            {audience === "consumer" && <button type="button" aria-expanded={revealed} aria-controls="graded-demo-result" onClick={() => setRevealed((value) => !value)} className="mt-5 rounded-md border border-[#ff806a66] px-4 py-2.5 text-[12px] font-semibold text-[#ffab98] hover:bg-[#ff806a12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">{revealed ? "Hide the sample review" : "Reveal the sample review"}</button>}
           </div>
-          <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-1">
+          {!revealed && audience === "consumer" && <div className="flex items-center justify-center p-7 text-center text-[13px] leading-6 text-[#aab4ba]">Read the code, then reveal the sample review and result.</div>}
+          <div id="graded-demo-result" className={revealed || audience === "bootcamps" ? "grid gap-0 sm:grid-cols-2 lg:grid-cols-1" : "hidden"}>
             <div className="border-b border-[#ffffff12] p-5 sm:p-6"><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#9ba6ad]">Example review</p><blockquote className="mt-3 border-l-2 border-[#ff806a] pl-3 text-[12px] leading-6 text-[#d0d6da]">“The lookup no longer normalizes email casing. A stored address like Ana@example.com will not match ana@example.com; normalize the key before lookup.”</blockquote></div>
             <div className="p-5 sm:p-6">
               <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#9ba6ad]">ReviewIQ result · example</p><p className="mt-2 text-[28px] font-semibold leading-none text-[#f4f5f6]">6.0<span className="ml-1 text-[14px] font-medium text-[#9ba6ad]">/10</span></p></div><p className="text-[12px] font-medium text-[#d6ddda]">1 of 2 issues caught</p></div>
