@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { captureProductEvent } from "@/lib/analytics";
+import { captureProductEvent, resetProductUser } from "@/lib/analytics";
 
 export default function ProductHeader({ active }: { active: "review" | "history" }) {
   const [credits, setCredits] = useState<number | null>(null);
@@ -16,6 +16,7 @@ export default function ProductHeader({ active }: { active: "review" | "history"
   const gumroadUrl = process.env.NEXT_PUBLIC_GUMROAD_URL;
   async function signOut() {
     await createClient().auth.signOut();
+    resetProductUser();
     window.location.href = "/";
   }
   return (

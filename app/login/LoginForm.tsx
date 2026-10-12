@@ -5,8 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FREE_REVIEW_CREDITS } from "@/lib/credit-config";
-import { captureProductEvent, captureProductEventOncePerSession } from "@/lib/analytics";
-import posthog from "posthog-js";
+import { captureProductEvent, captureProductEventOncePerSession, identifyProductUser, markSignupIntent } from "@/lib/analytics";
 
 export default function LoginForm({ initialMode, returnTo, authError = false }: { initialMode: "signup" | "signin" | "reset"; returnTo?: string; authError?: boolean }) {
   const router = useRouter();
@@ -35,10 +34,14 @@ export default function LoginForm({ initialMode, returnTo, authError = false }: 
   }
 
   function markSignupStarted() {
-    if (isSignUp) captureProductEventOncePerSession("signup-started", "signup_started");
+    if (isSignUp) {
+      markSignupIntent();
+      captureProductEventOncePerSession("signup-started", "signup_started");
+    }
   }
 
   async function continueWithGoogle() {
+    markSignupStarted();
     setLoading(true); setError(""); setMessage("");
     const next = returnTo || "/review";
     const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
@@ -68,27 +71,25 @@ export default function LoginForm({ initialMode, returnTo, authError = false }: 
       return;
     }
     if (isSignUp) {
+      markSignupStarted();
       const emailRedirectTo = returnTo
         ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnTo)}`
         : undefined;
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
       if (signUpError) { setError(signUpError.message); setLoading(false); return; }
-      if (data.user) {
-        posthog.identify(data.user.id);
-        captureProductEvent("signup_completed");
-      }
       if (!data.session) {
         setMessage("Your account is ready. Check your email to confirm it, then sign in to start your first review.");
         setLoading(false); setIsSignUp(false);
         window.history.replaceState(null, "", returnTo ? `/login?redirect=${encodeURIComponent(returnTo)}` : "/login");
         return;
       }
+      if (data.user) identifyProductUser(data.user.id, data.user.created_at);
       router.push(returnTo || "/review");
       return;
     }
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) { setError(signInError.message); setLoading(false); return; }
-    if (data.user) posthog.identify(data.user.id);
+    if (data.user) identifyProductUser(data.user.id, data.user.created_at);
     captureProductEvent("signin_completed");
     router.push(returnTo || "/review");
   }

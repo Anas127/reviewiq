@@ -1,54 +1,56 @@
 import Link from "next/link";
+import ExampleExercisePreview from "@/app/components/ExampleExercisePreview";
 import LandingAnalytics from "@/app/components/LandingAnalytics";
-import GradedReviewDemo from "@/app/components/GradedReviewDemo";
 import TrackedLink from "@/app/components/TrackedLink";
 import { FREE_REVIEW_CREDITS, PRO_CREDITS_PER_BILLING_CYCLE, PRO_PRICE_USD } from "@/lib/credit-config";
+import { createClient } from "@/lib/supabase/server";
 
 const steps = [
-  ["01", "Read the change", "Inspect a realistic pull request matched to your role, language, and experience level."],
-  ["02", "Write your review", "Identify risks in unfamiliar code, explain the impact, and suggest a fix."],
-  ["03", "See what you missed", "Compare your findings with deliberately planted issues and get focused feedback."],
+  ["01", "Choose your context", "Pick a role, language, and experience level for your review."],
+  ["02", "Review the change", "Read the code and explain the bugs and their impact in your review."],
+  ["03", "Learn from the result", "Get a score and feedback on what you caught and missed. Revisit saved reviews in History."],
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const startHref = user ? "/review" : "/login?mode=signup&redirect=%2Freview";
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#101418] text-[#f4f5f6]">
       <LandingAnalytics />
-      <nav aria-label="Main navigation" className="relative z-10 mx-auto flex min-h-[76px] max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-3 lg:px-10">
+      <nav aria-label="Main navigation" className="mx-auto flex min-h-[76px] max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-3 lg:px-10">
         <Link href="/" className="text-[21px] font-extrabold tracking-[-1.2px]">Review<span className="text-[#ff806a]">IQ</span></Link>
-        <Link href="/bootcamps" className="order-3 w-full text-[12px] font-semibold text-[#cbd3d7] transition hover:text-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87] sm:order-none sm:w-auto sm:text-[13px]">For Training Programs <span aria-hidden="true" className="text-[#ff806a]">↗</span></Link>
-        <div className="flex items-center gap-3 sm:gap-4"><Link href="/login" className="hidden text-[13px] font-medium text-[#aab2b8] hover:text-white sm:block">Sign in</Link><TrackedLink href="/login?mode=signup" event="hero_primary_clicked" className="rounded-md bg-[#ff806a] px-3 py-2.5 text-[11px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] sm:px-4 sm:text-[12px]">Start Free <span aria-hidden="true">↗</span></TrackedLink></div>
-      </nav>
-      <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-10 sm:pt-16 lg:grid-cols-[.9fr_1.1fr] lg:px-10 lg:pb-24 lg:pt-14">
-        <div className="relative z-[1]">
-          <p className="mb-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff9a87]"><span className="h-px w-8 bg-[#ff806a]" />Deliberate practice for code-review judgment</p>
-          <h1 className="max-w-[620px] text-[43px] font-semibold leading-[1.04] tracking-[-2.4px] sm:text-[58px] lg:text-[66px]">Can you review code like <span className="font-serif italic font-normal text-[#ff806a]">the engineer they’d hire?</span></h1>
-          <p className="mt-6 max-w-[540px] text-[15px] leading-7 text-[#b2bbc1]">Review realistic pull requests with deliberately planted issues. Write your review, then see what you caught, what you missed, and why it matters.</p>
-          <p className="mt-3 max-w-[520px] text-[12px] leading-6 text-[#9ba6ad]">Choose your role, language, and experience level. ReviewIQ gives you deliberate repetitions for an engineering skill that is hard to practice outside a team.</p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <TrackedLink href="/login?mode=signup" event="hero_primary_clicked" className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Test my review skills — {FREE_REVIEW_CREDITS} free <span className="ml-2" aria-hidden="true">↗</span></TrackedLink>
-            <TrackedLink href="#graded-review-demo" event="graded_review_demo_cta_clicked" className="rounded-md border border-[#ffffff2a] px-4 py-3 text-[12px] font-semibold text-[#d6dcdf] transition hover:border-[#ff806a] hover:text-white focus-visible:outline-2 focus-visible:outline-[#ff9a87]">See a graded review <span className="ml-1 text-[#ff806a]" aria-hidden="true">↓</span></TrackedLink>
-          </div>
-          <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#ffffff14] pt-4 text-[11px] text-[#a3adb3]"><span><b className="mr-1.5 text-[#edf0f1]">{FREE_REVIEW_CREDITS}</b> free reviews</span><span aria-hidden="true" className="h-3 w-px bg-[#384047]"/><span>No card required</span><span aria-hidden="true" className="h-3 w-px bg-[#384047]"/><span>Credits used after successful grading</span></div>
+        <div className="flex items-center gap-4">
+          <Link href="/bootcamps" className="hidden text-[12px] font-semibold text-[#cbd3d7] hover:text-[#ff9a87] sm:block">For Training Programs</Link>
+          {!user && <Link href="/login" className="text-[12px] text-[#aab2b8] hover:text-white">Sign in</Link>}
+          <TrackedLink href={startHref} event="hero_primary_clicked" eventProperties={{ location: "nav" }} className="rounded-md bg-[#ff806a] px-3 py-2.5 text-[12px] font-bold text-[#1d1715] hover:bg-[#ff9a87]">Try a review</TrackedLink>
         </div>
-        <div aria-label="ReviewIQ practice and grading preview" className="relative mx-auto w-full max-w-[680px] lg:ml-auto">
-          <div className="relative overflow-hidden rounded-xl border border-[#ffffff1a] bg-[#151b20] shadow-[0_34px_100px_-38px_#000]">
-            <div className="flex h-12 items-center justify-between border-b border-[#ffffff12] bg-[#171e23] px-4"><div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#ff806a]"/><span className="text-[10px] font-semibold tracking-wide text-[#bbc2c7]">PRACTICE · BACKEND ENGINEER</span></div><span className="font-mono text-[10px] text-[#89949d]">PYTHON / MID-LEVEL</span></div>
-            <div className="grid md:grid-cols-2">
-              <div className="border-b border-[#ffffff12] p-5 md:border-b-0 md:border-r"><div className="mb-4"><p className="text-[10px] text-[#89959d]">Pull request</p><p className="mt-1 text-[13px] font-semibold">Update account handling</p></div><pre tabIndex={0} aria-label="Code review exercise preview" className="overflow-x-auto rounded-md border border-[#ffffff0d] bg-[#0e1317] p-3 font-mono text-[9px] leading-5 text-[#c2cbd0] sm:text-[10px]">{"def find_account(email, accounts):\n    account = accounts.get(email)\n    if account is None: return None\n    return account\n\ndef deactivate(account, db):\n    account.active = False\n    db.save(account)\n    return True"}</pre><div className="mt-3 rounded border border-[#ffffff12] bg-[#101519] p-2.5"><p className="text-[9px] font-semibold uppercase tracking-[.12em] text-[#9ba6ad]">Your review</p><p className="mt-1 text-[10px] leading-4 text-[#c3ccd1]">“Normalize email casing before the lookup.”</p></div><p className="mt-3 text-[10px] text-[#8e999f]">2 deliberately planted issues</p></div>
-              <div className="p-5"><p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#9ba6ad]">Grading preview</p><p className="mt-3 text-[28px] font-semibold text-white">6.0<span className="ml-1 text-[14px] text-[#a4adb3]">/10</span></p><p className="mt-1 text-[11px] text-[#c1c9ce]">1 of 2 important issues caught</p><div className="mt-4 space-y-2"><div className="rounded border border-emerald-300/20 bg-emerald-300/[.05] p-2.5 text-[10px] text-[#b8d9c3]"><b className="text-[#a9dfbc]">Caught</b> · Email casing can break account lookup</div><div className="rounded border border-[#ff806a33] bg-[#ff806a0a] p-2.5 text-[10px] leading-5 text-[#d0c0bc]"><b className="text-[#ffab98]">Missed</b> · Save failure can still be reported as success</div></div><p className="mt-3 text-[10px] leading-5 text-[#9ba6ad]">See the impact, why it matters, and what to inspect next.</p></div>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#ffffff12] px-5 py-3 text-[9px] text-[#89949b]"><span>Example only · actual results vary</span><span className="tracking-[.14em]">REVIEWIQ · ENGINEERING JUDGMENT</span></div>
+      </nav>
+      <section className="mx-auto grid max-w-7xl items-start gap-8 px-6 pb-16 pt-10 lg:grid-cols-[.95fr_1.05fr] lg:items-center lg:gap-12 lg:px-10 lg:pb-24 lg:pt-20">
+        <div>
+          <p className="mb-5 text-[11px] font-semibold uppercase tracking-[.2em] text-[#ff9a87]">Code review practice</p>
+          <h1 className="max-w-[620px] text-[40px] font-semibold leading-[1.08] tracking-[-2px] sm:text-[56px] lg:text-[62px]">Would you approve this <span className="font-serif italic font-normal text-[#ff806a]">AI-generated code?</span></h1>
+          <p className="mt-5 max-w-[560px] text-[15px] leading-7 text-[#b2bbc1]">Practice on a code change with three planted bugs. Explain what could break, then get a score and feedback on what you caught and missed.</p>
+          <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <TrackedLink href={startHref} event="hero_primary_clicked" eventProperties={{ location: "hero" }} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Try your first review <span aria-hidden="true" className="ml-2">↗</span></TrackedLink>
+            <p className="text-[12px] leading-5 text-[#aeb8be]">{FREE_REVIEW_CREDITS} free reviews on signup. No card required.</p>
           </div>
+        </div>
+        <ExampleExercisePreview />
+      </section>
+      <section id="how-it-works" className="border-y border-[#ffffff12] bg-[#13191e] px-6 py-16 lg:px-10 lg:py-20">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[.2em] text-[#ff9a87]">How it works</p>
+          <h2 className="mt-3 max-w-2xl text-[30px] font-semibold tracking-[-1px] sm:text-[38px]">Practice catching failures before code is approved.</h2>
+          <div className="mt-9 grid gap-8 border-t border-[#ffffff17] pt-7 sm:grid-cols-3">{steps.map(([number, title, body]) => <article key={number}><p className="font-mono text-[11px] text-[#ff927e]">{number}</p><h3 className="mt-4 text-[16px] font-semibold">{title}</h3><p className="mt-2 max-w-sm text-[13px] leading-6 text-[#aab4ba]">{body}</p></article>)}</div>
         </div>
       </section>
-      <GradedReviewDemo />
-      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[.8fr_1.2fr] lg:px-10 lg:py-24"><div><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">Why review practice matters</p><h2 className="mt-3 text-[31px] font-semibold leading-tight tracking-[-1.1px] sm:text-[38px]">Reviewing unfamiliar code takes practice too.</h2></div><div className="max-w-2xl"><p className="text-[14px] leading-7 text-[#b2bbc1]">You can write code on your own. Reviewing someone else’s changes is harder to rehearse because most developers build that judgment inside a team, on real pull requests.</p><p className="mt-4 text-[14px] leading-7 text-[#b2bbc1]">ReviewIQ gives you focused repetitions: inspect unfamiliar changes, identify risks, explain their impact, suggest fixes, and compare your judgment with deliberately planted issues.</p></div></section>
-      <section id="method" className="scroll-mt-8 border-y border-[#ffffff12] bg-[#13191e] px-6 py-20 lg:px-10 lg:py-24"><div className="mx-auto max-w-7xl"><div className="mb-11 max-w-2xl"><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff927e]">The practice loop</p><h2 className="mt-3 text-[32px] font-semibold tracking-[-1.2px] sm:text-[40px]">Realistic PR. Your review. Clear feedback.</h2><p className="mt-4 text-[13px] leading-6 text-[#aab4ba]">See how your review compares with the issues planted in the change, then use the result to sharpen your next pass.</p></div><div className="grid gap-8 border-t border-[#ffffff17] pt-7 sm:grid-cols-3 sm:gap-10">{steps.map(([number,title,body], index) => <article key={number}><p className="font-mono text-[11px] text-[#ff927e]">{number}{index < steps.length - 1 && <span className="hidden pl-4 text-[#616d75] sm:inline">→</span>}</p><h3 className="mt-4 text-[16px] font-semibold">{title}</h3><p className="mt-2 max-w-sm text-[12px] leading-6 text-[#a5afb5]">{body}</p></article>)}</div></div></section>
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10 lg:py-24"><div className="grid gap-8 md:grid-cols-[.8fr_1.2fr] md:items-end"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff927e]">Practice at your level</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">A review context that feels like yours.</h2></div><p className="max-w-2xl text-[13px] leading-6 text-[#aab4ba]">Choose from Backend, Frontend, Full Stack, or Data Engineer roles; Python, TypeScript, JavaScript, Java, or Go; and Junior, Mid-level, or Senior experience. Exercises are tailored to those settings.</p></div></section>
-      <section className="border-y border-[#ffffff12] bg-[#13191e] px-6 py-16 lg:px-10"><div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[1fr_auto] md:items-center"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff927e]">Start free. Repeat when you’re ready.</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">Find out where your review judgment stands.</h2><p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#aab4ba]">Free includes {FREE_REVIEW_CREDITS} review credits and detailed caught-versus-missed feedback. ReviewIQ Pro is {PRO_PRICE_USD} per month for {PRO_CREDITS_PER_BILLING_CYCLE} new credits each billing cycle; unused credits roll over.</p></div><div className="flex flex-col gap-3"><TrackedLink href="/login?mode=signup" event="free_plan_cta_clicked" className="rounded-md bg-[#ff806a] px-5 py-3 text-center text-[12px] font-bold text-[#1d1715] hover:bg-[#ff9a87]">Test my review skills — {FREE_REVIEW_CREDITS} free</TrackedLink><Link href="/pricing" className="text-center text-[11px] text-[#c5cdd1] underline decoration-[#68747b] underline-offset-4 hover:text-white">See plans and billing details</Link></div></div></section>
-      <section className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-6 py-16 sm:flex-row sm:items-center lg:px-10"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff927e]">Your next review starts here</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">Would you catch the important issues?</h2><p className="mt-2 text-[12px] text-[#aab4ba]">Try {FREE_REVIEW_CREDITS} reviews free. No card required.</p></div><TrackedLink href="/login?mode=signup" event="hero_primary_clicked" className="rounded-md bg-[#ff806a] px-5 py-3 text-[12px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87]">Test my review skills — {FREE_REVIEW_CREDITS} free <span className="ml-2" aria-hidden="true">↗</span></TrackedLink></section>
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ffffff12] px-6 py-6 text-[11px] text-[#89949b] lg:px-10"><Link href="/" className="font-extrabold tracking-[-.7px] text-[#d8dcde]">Review<span className="text-[#ff806a]">IQ</span></Link><span>Deliberate practice for code-review judgment.</span><Link href="/bootcamps" className="hover:text-white">For training programs</Link><Link href="/privacy" className="hover:text-white">Privacy</Link><span>© 2026 ReviewIQ</span></footer>
+      <section className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-6 py-16 sm:flex-row sm:items-center lg:px-10">
+        <div><p className="text-[11px] font-semibold uppercase tracking-[.2em] text-[#ff9a87]">Keep practicing</p><h2 className="mt-3 text-[30px] font-semibold tracking-[-1px]">Start with {FREE_REVIEW_CREDITS} free reviews.</h2><p className="mt-3 max-w-2xl text-[13px] leading-6 text-[#aab4ba]">Pro is {PRO_PRICE_USD} per month and adds {PRO_CREDITS_PER_BILLING_CYCLE} reviews each billing cycle. <Link href="/pricing" className="text-[#ff9a87] underline underline-offset-4 hover:text-white">See plans and billing details.</Link></p></div>
+        <TrackedLink href={startHref} event="hero_primary_clicked" eventProperties={{ location: "bottom" }} className="rounded-md bg-[#ff806a] px-5 py-3 text-[13px] font-bold text-[#1d1715] hover:bg-[#ff9a87]">Try your first review</TrackedLink>
+      </section>
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ffffff12] px-6 py-6 text-[11px] text-[#89949b] lg:px-10"><Link href="/" className="font-extrabold tracking-[-.7px] text-[#d8dcde]">Review<span className="text-[#ff806a]">IQ</span></Link><span>Code review practice for developers.</span><Link href="/bootcamps" className="hover:text-white">For training programs</Link><Link href="/privacy" className="hover:text-white">Privacy</Link><span>© 2026 ReviewIQ</span></footer>
     </main>
   );
 }

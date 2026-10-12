@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ProductHeader from "@/app/components/ProductHeader";
-import { captureProductEvent, captureProductEventOnce } from "@/lib/analytics";
+import { captureProductEvent, captureProductEventOnce, identifyProductUser } from "@/lib/analytics";
 import { LANGUAGES, ROLES, SENIORITIES } from "@/lib/practice-options";
 
 type Grade = {
@@ -75,6 +75,7 @@ export default function ReviewPage() {
     fetch("/api/credits")
       .then((response) => response.json())
       .then((data) => {
+        if (data.userId) identifyProductUser(data.userId, data.userCreatedAt);
         setCompletedReviews(data.completedReviews ?? 0);
         setUserId(data.userId ?? "");
         setReviewCountLoaded(true);
