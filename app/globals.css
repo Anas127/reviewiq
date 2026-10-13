@@ -9,6 +9,30 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.landing-hero-title {
+  font-size: 2.25rem;
+}
+
+.landing-section-title {
+  font-size: 1.875rem;
+}
+
+@media (min-width: 640px) {
+  .landing-hero-title {
+    font-size: 3rem;
+  }
+
+  .landing-section-title {
+    font-size: 2.375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-hero-title {
+    font-size: 3.75rem;
+  }
+}
+
 :focus-visible {
   outline: 2px solid #ff9a87;
   outline-offset: 2px;
