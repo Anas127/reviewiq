@@ -6,11 +6,12 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next");
   const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/review";
+  const retryNext = safeNext === "/review" || safeNext === "/pricing" || safeNext === "/api/checkout" || safeNext.startsWith("/oauth/consent?authorization_id=");
 
   if (searchParams.has("error")) {
     const login = new URL("/login", origin);
     login.searchParams.set("auth_error", "1");
-    if (safeNext.startsWith("/oauth/consent?authorization_id=")) login.searchParams.set("redirect", safeNext);
+    if (retryNext) login.searchParams.set("redirect", safeNext);
     return NextResponse.redirect(login);
   }
 
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
     if (error) {
       const login = new URL("/login", origin);
       login.searchParams.set("auth_error", "1");
-      if (safeNext.startsWith("/oauth/consent?authorization_id=")) login.searchParams.set("redirect", safeNext);
+      if (retryNext) login.searchParams.set("redirect", safeNext);
       return NextResponse.redirect(login);
     }
   }

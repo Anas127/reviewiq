@@ -2,6 +2,7 @@ import Link from "next/link";
 import ExampleExercisePreview from "@/app/components/ExampleExercisePreview";
 import GradedReviewDemo from "@/app/components/GradedReviewDemo";
 import LandingAnalytics from "@/app/components/LandingAnalytics";
+import RevealGradedDemoLink from "@/app/components/RevealGradedDemoLink";
 import TrackedLink from "@/app/components/TrackedLink";
 import { FREE_REVIEW_CREDITS, PRO_CREDITS_PER_BILLING_CYCLE, PRO_PRICE_USD } from "@/lib/credit-config";
 import { createClient } from "@/lib/supabase/server";
@@ -38,7 +39,8 @@ export default async function Home() {
           <h1 className="landing-hero-title max-w-[18ch] font-semibold leading-[1.08] tracking-[-0.04em]">Would you approve this <span className="font-serif italic font-normal text-[#ff806a]">AI-generated code?</span></h1>
           <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-[#b2bbc1] lg:text-lg">Practice on a code change with three planted bugs. Explain what could break, then get a score and feedback on what you caught and missed.</p>
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <TrackedLink href={startHref} event="hero_primary_clicked" eventProperties={{ location: "hero" }} className={primaryCta}>Try your first review <span aria-hidden="true" className="ml-2">↗</span></TrackedLink>
+            <RevealGradedDemoLink className={primaryCta}>See the feedback example <span aria-hidden="true" className="ml-2">↓</span></RevealGradedDemoLink>
+            <TrackedLink href={startHref} event="hero_secondary_clicked" eventProperties={{ location: "hero" }} className="inline-flex min-h-11 items-center rounded-md border border-[#ffffff35] px-5 py-3 text-sm font-semibold text-[#f4f5f6] transition-colors hover:border-[#ff806a] hover:text-[#ffab98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Start free</TrackedLink>
             <p className="text-sm leading-relaxed text-[#aeb8be]">{FREE_REVIEW_CREDITS} free reviews on signup. No card required.</p>
           </div>
         </div>
