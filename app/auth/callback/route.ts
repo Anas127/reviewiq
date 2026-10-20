@@ -1,14 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { guestSession, loadGuestAttempt } from "@/lib/guest/server";
+import { recordGuestEvent } from "@/lib/guest/events";
+
+async function recordGuestAuthFailure() {
+  try {
+    const session = await guestSession();
+    const attempt = session && await loadGuestAttempt(session.hash);
+    if (attempt) await recordGuestEvent(attempt, "guest_flow_failed", "authentication", { failure_stage: "authentication", error_code: "auth_callback_failed" });
+  } catch {}
+}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next");
   const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "/review";
-  const retryNext = safeNext === "/review" || safeNext === "/pricing" || safeNext === "/api/checkout" || safeNext.startsWith("/oauth/consent?authorization_id=");
+  const retryNext = safeNext === "/review" || safeNext === "/pricing" || safeNext === "/api/checkout" || safeNext === "/guest/claim" || safeNext.startsWith("/oauth/consent?authorization_id=");
 
   if (searchParams.has("error")) {
+    if (safeNext === "/guest/claim") await recordGuestAuthFailure();
     const login = new URL("/login", origin);
     login.searchParams.set("auth_error", "1");
     if (retryNext) login.searchParams.set("redirect", safeNext);
@@ -19,6 +30,7 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
+      if (safeNext === "/guest/claim") await recordGuestAuthFailure();
       const login = new URL("/login", origin);
       login.searchParams.set("auth_error", "1");
       if (retryNext) login.searchParams.set("redirect", safeNext);

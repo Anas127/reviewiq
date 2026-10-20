@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import TrackedLink from "@/app/components/TrackedLink";
 import { captureProductEventOncePerSession } from "@/lib/analytics";
 
-export default function GradedReviewDemo({ audience = "consumer" }: { audience?: "consumer" | "bootcamps" }) {
+export default function GradedReviewDemo({ audience = "consumer", startHref = "/try" }: { audience?: "consumer" | "bootcamps"; startHref?: string }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [revealed, setRevealed] = useState(false);
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function GradedReviewDemo({ audience = "consumer" }: { audience?:
             </div>
           </div>
         </div>
-        <div className="mt-7 flex flex-wrap items-center gap-4"><TrackedLink href={audience === "bootcamps" ? "#pilot-form" : "/login?mode=signup&redirect=%2Freview"} event={audience === "bootcamps" ? "bootcamps_pilot_cta_clicked" : "graded_review_demo_cta_clicked"} eventProperties={audience === "bootcamps" ? { placement: "demo" } : undefined} className="inline-flex min-h-11 items-center rounded-md bg-[#ff806a] px-5 py-3 text-sm font-bold text-[#1d1715] transition hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">{audience === "bootcamps" ? "Bring this practice to your cohort" : "Start my first review free"} <span className="ml-2" aria-hidden="true">↗</span></TrackedLink><span className="text-xs text-[#9aa5ac]">{audience === "bootcamps" ? "Illustrative review · actual results vary" : "No card required"}</span></div>
+        <div className="mt-7 flex flex-wrap items-center gap-4"><TrackedLink href={audience === "bootcamps" ? "#pilot-form" : startHref} event={audience === "bootcamps" ? "bootcamps_pilot_cta_clicked" : "graded_review_demo_cta_clicked"} eventProperties={audience === "bootcamps" ? { placement: "demo" } : undefined} className="inline-flex min-h-11 items-center rounded-md bg-[#ff806a] px-5 py-3 text-sm font-bold text-[#1d1715] transition hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">{audience === "bootcamps" ? "Bring this practice to your cohort" : "Start my first review free"} <span className="ml-2" aria-hidden="true">↗</span></TrackedLink><span className="text-xs text-[#9aa5ac]">{audience === "bootcamps" ? "Illustrative review · actual results vary" : "No card required"}</span></div>
       </div>
     </section>
   );

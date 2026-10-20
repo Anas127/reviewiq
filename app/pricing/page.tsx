@@ -3,17 +3,21 @@ import PricingAnalytics from "@/app/components/PricingAnalytics";
 import UpgradeButton from "@/app/components/UpgradeButton";
 import TrackedLink from "@/app/components/TrackedLink";
 import { FREE_REVIEW_CREDITS, PRO_CREDITS_PER_BILLING_CYCLE, PRO_PRICE_USD } from "@/lib/credit-config";
+import { createClient } from "@/lib/supabase/server";
 
 const gumroadUrl = process.env.NEXT_PUBLIC_GUMROAD_URL;
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const startHref = user ? "/review" : "/try";
   return (
     <main className="min-h-screen bg-[#101418] text-[#f4f5f6]">
       <PricingAnalytics />
       <nav aria-label="Main navigation" className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-6 lg:px-10">
         <Link href="/" className="text-[21px] font-extrabold tracking-[-1.2px]">Review<span className="text-[#ff806a]">IQ</span></Link>
         <div className="flex items-center gap-5 text-[13px] font-medium text-[#aab2b8] sm:gap-7"><Link href="/" className="hover:text-white">Product</Link><Link href="/pricing" aria-current="page" className="text-white">Pricing</Link></div>
-        <TrackedLink href="/login?mode=signup&redirect=%2Freview" event="free_plan_cta_clicked" className="rounded-md bg-[#ff806a] px-3 py-2.5 text-[11px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] sm:px-4 sm:text-[12px]">Test my skills <span aria-hidden="true">↗</span></TrackedLink>
+        <TrackedLink href={user ? startHref : "/try?from=pricing_nav"} event="free_plan_cta_clicked" className="rounded-md bg-[#ff806a] px-3 py-2.5 text-[11px] font-bold text-[#1d1715] transition hover:bg-[#ff9a87] sm:px-4 sm:text-[12px]">Test my skills <span aria-hidden="true">↗</span></TrackedLink>
       </nav>
       <section className="px-6 pb-24 pt-14 lg:pt-20">
         <div className="mx-auto max-w-5xl">
@@ -25,7 +29,7 @@ export default function PricingPage() {
               <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#aab4ba]">Free · discover where you stand</p>
               <div className="mt-5 flex items-baseline gap-2"><span className="text-[44px] font-semibold tracking-[-2px]">$0</span><span className="text-[12px] text-[#aab4ba]">to start</span></div>
               <p className="mt-2 min-h-12 text-[13px] leading-6 text-[#b2bbc1]">See how your code-review judgment measures up.</p>
-              <TrackedLink href="/login?mode=signup&redirect=%2Freview" event="free_plan_cta_clicked" className="mt-6 rounded-md border border-[#ffffff35] py-3 text-center text-[13px] font-semibold transition hover:border-[#ff806a] hover:text-white focus-visible:outline-2 focus-visible:outline-[#ff9a87]">Test my review skills free</TrackedLink>
+              <TrackedLink href={user ? startHref : "/try?from=pricing_free"} event="free_plan_cta_clicked" className="mt-6 rounded-md border border-[#ffffff35] py-3 text-center text-[13px] font-semibold transition hover:border-[#ff806a] hover:text-white focus-visible:outline-2 focus-visible:outline-[#ff9a87]">Test my review skills free</TrackedLink>
               <ul className="mt-7 space-y-3.5 border-t border-[#ffffff18] pt-6 text-[13px] leading-5 text-[#d0d6da]">
                 {[`${FREE_REVIEW_CREDITS} review credits to start`, "Realistic pull requests and planted issues", "Detailed caught-versus-missed feedback", "No card required", "Credits used only after successful grading and save"].map((item) => <li key={item} className="flex gap-3"><span aria-hidden="true" className="text-[#ff927e]">✓</span><span>{item}</span></li>)}
               </ul>

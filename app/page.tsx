@@ -18,7 +18,7 @@ const primaryCta = "min-h-11 rounded-md bg-[#ff806a] px-5 py-3 text-sm font-bold
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const startHref = user ? "/review" : "/login?mode=signup&redirect=%2Freview";
+  const startHref = user ? "/review" : "/try";
   const proHref = user ? "/pricing" : "/login?mode=signup&redirect=%2Fpricing";
 
   return (
@@ -29,7 +29,7 @@ export default async function Home() {
         <div className="flex items-center gap-2 sm:gap-4">
           <Link href="/bootcamps" className="hidden text-sm font-semibold text-[#cbd3d7] hover:text-[#ff9a87] sm:block">For Training Programs</Link>
           {!user && <Link href="/login" className="text-sm text-[#aab2b8] hover:text-white">Sign in</Link>}
-          <TrackedLink href={startHref} event="hero_primary_clicked" eventProperties={{ location: "nav" }} className={primaryCta}>Try a review</TrackedLink>
+          <TrackedLink href={user ? startHref : "/try?from=nav"} event="hero_primary_clicked" eventProperties={{ location: "nav" }} className={primaryCta}>Try a review</TrackedLink>
         </div>
       </nav>
 
@@ -40,14 +40,14 @@ export default async function Home() {
           <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-[#b2bbc1] lg:text-lg">Practice on a code change with three planted bugs. Explain what could break, then get a score and feedback on what you caught and missed.</p>
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
             <RevealGradedDemoLink className={primaryCta}>See the feedback example <span aria-hidden="true" className="ml-2">↓</span></RevealGradedDemoLink>
-            <TrackedLink href={startHref} event="hero_secondary_clicked" eventProperties={{ location: "hero" }} className="inline-flex min-h-11 items-center rounded-md border border-[#ffffff35] px-5 py-3 text-sm font-semibold text-[#f4f5f6] transition-colors hover:border-[#ff806a] hover:text-[#ffab98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Start free</TrackedLink>
+            <TrackedLink href={user ? startHref : "/try?from=hero"} event="hero_secondary_clicked" eventProperties={{ location: "hero" }} className="inline-flex min-h-11 items-center rounded-md border border-[#ffffff35] px-5 py-3 text-sm font-semibold text-[#f4f5f6] transition-colors hover:border-[#ff806a] hover:text-[#ffab98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Start free</TrackedLink>
             <p className="text-sm leading-relaxed text-[#aeb8be]">{FREE_REVIEW_CREDITS} free reviews on signup. No card required.</p>
           </div>
         </div>
         <ExampleExercisePreview />
       </section>
 
-      <GradedReviewDemo />
+      <GradedReviewDemo startHref={user ? startHref : "/try?from=graded_demo"} />
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[.8fr_1.2fr] lg:gap-10 lg:px-10">
         <div>
@@ -82,7 +82,7 @@ export default async function Home() {
           </div>
           <div>
             <p className="max-w-[65ch] text-base leading-relaxed text-[#aab4ba]">Pick your language, role and experience level. Find the bugs, submit your review, and see how you scored.</p>
-            <TrackedLink href={startHref} event="free_plan_cta_clicked" eventProperties={{ location: "practice_level" }} className={`mt-5 inline-flex items-center ${primaryCta}`}>Test yourself free</TrackedLink>
+            <TrackedLink href={user ? startHref : "/try?from=practice_level"} event="free_plan_cta_clicked" eventProperties={{ location: "practice_level" }} className={`mt-5 inline-flex items-center ${primaryCta}`}>Test yourself free</TrackedLink>
             <p className="mt-2 text-sm leading-relaxed text-[#aab4ba]">{FREE_REVIEW_CREDITS} free reviews. No card required.</p>
           </div>
         </div>

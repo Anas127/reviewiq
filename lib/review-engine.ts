@@ -115,11 +115,12 @@ type MissedIssue = { bug: number; description: string; reason: string };
 type GradingResult = { caught: CaughtIssue[]; missed: MissedIssue[]; extraFindings: string[]; falsePositives: string[]; reviewQuality: number; feedback: string };
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-export async function gradeReview(client: OpenAI, code: string, bugs: ExerciseBug[], userReview: string) {
+export async function gradeReview(client: OpenAI, code: string, bugs: ExerciseBug[], userReview: string, options: { maxCompletionTokens?: number } = {}) {
   const bugsStr = bugs.map((bug) => `Bug ${bug.id}: ${bug.description}`).join("\n");
   const response = await client.chat.completions.create({
     model: "gpt-6-sol",
     reasoning_effort: "none",
+    ...(options.maxCompletionTokens ? { max_completion_tokens: options.maxCompletionTokens } : {}),
     messages: [
       { role: "system", content: `You are an experienced software engineer evaluating a developer's code review.
 

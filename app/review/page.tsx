@@ -77,7 +77,7 @@ export default function ReviewPage() {
     fetch("/api/credits")
       .then((response) => response.json())
       .then((data) => {
-        if (data.userId) identifyProductUser(data.userId, data.userCreatedAt);
+        if (data.userId) identifyProductUser(data.userId, data.userCreatedAt, data.userConfirmedAt);
         setCompletedReviews(data.completedReviews ?? 0);
         setUserId(data.userId ?? "");
         setReviewCountLoaded(true);

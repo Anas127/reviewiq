@@ -63,16 +63,21 @@ export function markSignupIntent() {
   } catch {}
 }
 
-export function identifyProductUser(userId: string, createdAt?: string) {
+export function clearSignupIntent() {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.removeItem(signupIntentKey); } catch {}
+}
+
+export function identifyProductUser(userId: string, createdAt?: string, confirmedAt?: string, suppressSignup = false) {
   try { posthog.identify(userId); } catch {}
   if (!createdAt || typeof window === "undefined") return;
   try {
     const intent = Number(window.localStorage.getItem(signupIntentKey));
     const created = Date.parse(createdAt);
-    if (intent && Number.isFinite(created) && created >= intent - 120000 && created <= Date.now()) {
+    if (!suppressSignup && confirmedAt && intent && Number.isFinite(created) && created >= intent - 120000 && created <= Date.now()) {
       captureProductEventOnce(`signup-completed-${userId}`, "signup_completed");
     }
-    if (intent) window.localStorage.removeItem(signupIntentKey);
+    if (intent && confirmedAt) window.localStorage.removeItem(signupIntentKey);
   } catch {}
 }
 

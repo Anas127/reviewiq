@@ -3,6 +3,8 @@ import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { openExercise } from "@/lib/exercise-token";
 import { gradeReview } from "@/lib/review-engine";
+import { adminClient } from "@/lib/guest/server";
+import { recordGuestEvent } from "@/lib/guest/events";
 
 export async function POST(req: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -48,6 +50,14 @@ export async function POST(req: Request) {
   if (!completed) return NextResponse.json({ error: "No credits remaining. Upgrade to ReviewIQ Pro to continue." }, { status: 402 });
 
   const { data: profile } = await supabase.from("profiles").select("credits").eq("id", user.id).single();
-  const { count: reviewCount } = await supabase.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+  const { count: reviewCount } = await supabase.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", user.id).is("guest_attempt_id", null);
+  if (reviewCount === 1) {
+    try {
+      const { data: priorGuest } = await adminClient().from("guest_attempts")
+        .select("id,session_hash,exercise_id,status,grading,attribution,claimed_user_id,created_at")
+        .eq("claimed_user_id", user.id).order("claimed_at", { ascending: true }).limit(1).maybeSingle();
+      if (priorGuest) await recordGuestEvent(priorGuest, "first_authenticated_review_completed", "", { user_id: user.id });
+    } catch (error) { console.error("First authenticated review analytics failed", error); }
+  }
   return NextResponse.json({ ...grading, creditsRemaining: profile?.credits ?? null, reviewNumber: reviewCount ?? null });
 }

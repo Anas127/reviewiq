@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import ProductHeader from "@/app/components/ProductHeader";
-import { captureProductEvent } from "@/lib/analytics";
+import { captureProductEvent, clearSignupIntent, identifyProductUser } from "@/lib/analytics";
 
 type Review = {
   id: string;
@@ -28,6 +28,7 @@ export default function HistoryPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selected, setSelected] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guestSaved, setGuestSaved] = useState(false);
   const viewTracked = useRef(false);
 
   useEffect(() => {
@@ -40,6 +41,10 @@ export default function HistoryPage() {
         window.location.href = "/login";
         return;
       }
+      identifyProductUser(user.id);
+      const justSavedGuest = new URLSearchParams(window.location.search).get("guest_saved") === "1";
+      if (justSavedGuest) clearSignupIntent();
+      setGuestSaved(justSavedGuest);
 
       if (!viewTracked.current) {
         viewTracked.current = true;
@@ -70,6 +75,7 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-[#101418] text-[#f4f5f6] flex flex-col overflow-hidden lg:h-screen">
       <ProductHeader active="history" />
+      {guestSaved && <div role="status" className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ff806a55] bg-[#ff806a12] px-4 py-4 text-sm text-[#f4f5f6] sm:px-8"><span>Your guest result is saved in History. Your free review credits are ready.</span><Link href="/review" className="inline-flex min-h-11 items-center rounded-md bg-[#ff806a] px-4 font-semibold text-[#1d1715]">Start my next review</Link></div>}
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">

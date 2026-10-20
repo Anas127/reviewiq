@@ -19,5 +19,5 @@ export async function GET() {
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id);
 
-  return NextResponse.json({ credits: profile?.credits ?? 0, completedReviews: count ?? 0, userId: user.id, userCreatedAt: user.created_at });
+  return NextResponse.json({ credits: profile?.credits ?? 0, completedReviews: count ?? 0, userId: user.id, userCreatedAt: user.created_at, userConfirmedAt: user.email_confirmed_at || user.confirmed_at });
 }
