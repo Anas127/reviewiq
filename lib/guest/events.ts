@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { PostHog } from "posthog-node";
 import { adminClient, type GuestAttempt } from "@/lib/guest/server";
 
@@ -10,7 +11,7 @@ export async function recordGuestEvent(attempt: GuestAttempt, eventName: string,
   const { error } = await admin.from("guest_event_outbox").upsert({ event_key: eventKey, event_name: eventName,
     attempt_id: attempt.id, user_id: extra.user_id || null, properties }, { onConflict: "event_key", ignoreDuplicates: true });
   if (error) throw error;
-  await flushGuestEvents(attempt.id);
+  after(() => flushGuestEvents(attempt.id));
 }
 
 export async function flushGuestEvents(attemptId: string) {
@@ -20,7 +21,8 @@ export async function flushGuestEvents(attemptId: string) {
   const { data, error } = await admin.from("guest_event_outbox").select("event_key,event_name,properties")
     .eq("attempt_id", attemptId).is("delivered_at", null).order("created_at", { ascending: true }).limit(20);
   if (error || !data?.length) return;
-  const posthog = new PostHog(token, { host: process.env.NEXT_PUBLIC_POSTHOG_HOST });
+  const posthog = new PostHog(token, { host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    requestTimeout: 5000, fetchRetryCount: 1, fetchRetryDelay: 250 });
   try {
     for (const event of data) {
       const props = event.properties as Record<string, string>;
