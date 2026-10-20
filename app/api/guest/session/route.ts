@@ -11,7 +11,9 @@ export async function POST(request: Request) {
     const current = await guestSession();
     if (current) {
       const attempt = await loadGuestAttempt(current.hash);
-      if (attempt) return NextResponse.json({ attemptId: attempt.id, status: attempt.status, grading: attempt.grading });
+      if (attempt) return NextResponse.json(attempt.claimed_user_id
+        ? { status: "claimed" }
+        : { attemptId: attempt.id, status: attempt.status, grading: attempt.grading });
     }
     const input = await readJsonLimited(request, 2048).catch(() => ({}));
     const attribution = sanitizeAttribution(input);

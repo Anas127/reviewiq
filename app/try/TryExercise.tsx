@@ -16,6 +16,7 @@ export default function TryExercise({ exercise, placement }: { exercise: PublicE
   const [review, setReview] = useState("");
   const [attemptId, setAttemptId] = useState("");
   const [grading, setGrading] = useState<Grading | null>(null);
+  const [claimed, setClaimed] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
@@ -31,6 +32,7 @@ export default function TryExercise({ exercise, placement }: { exercise: PublicE
         body: JSON.stringify({ ...acquisition, cta_placement: placement, anonymous_id: posthog.get_distinct_id() }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.code === "session_rate_limit" ? "Too many guest sessions from this network today. Please try again tomorrow." : "Could not start your guest session. Please retry.");
+      if (data.status === "claimed") { setClaimed(true); return; }
       setAttemptId(data.attemptId);
       if (data.status === "graded" && data.grading) setGrading(data.grading);
       void milestone("guest_exercise_viewed");
@@ -81,6 +83,13 @@ export default function TryExercise({ exercise, placement }: { exercise: PublicE
       window.location.assign(data.redirect);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not prepare your result for saving."); setAuthBusy(false); }
   }
+
+  if (claimed) return <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col justify-center px-4 py-16 text-[#f4f5f6] sm:px-6">
+    <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#ff9a87]">Guest review saved</p>
+    <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Ready for your next review?</h1>
+    <p className="mt-4 text-base leading-relaxed text-[#b2bbc1]">Your first result is already saved to your account. Sign in to see it in History and start your next review with your free credits.</p>
+    <a href="/login?mode=signin&redirect=%2Freview" className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-[#ff806a] px-5 py-3 text-sm font-bold text-[#1d1715] hover:bg-[#ff9a87] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff9a87]">Sign in to start my next review</a>
+  </div>;
 
   return <div className="mx-auto max-w-6xl px-4 pb-20 pt-6 sm:px-6 sm:pt-10">
     <div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#ff9a87]">Free code review exercise</p>

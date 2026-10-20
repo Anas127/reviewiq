@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   try {
     const attempt = await loadGuestAttempt(session.hash);
     if (!attempt) return NextResponse.json({ code: "session_missing", error: "Your guest session expired. Reload the page." }, { status: 401 });
+    if (attempt.claimed_user_id) return NextResponse.json({ code: "result_saved", error: "This guest result is saved. Sign in to start your next review." }, { status: 409 });
     const requestId = randomUUID();
     const configuredCap = Number(process.env.GUEST_GRADING_MAX_TOTAL || 250);
     const cap = Number.isFinite(configuredCap) ? Math.max(0, Math.min(10000, Math.floor(configuredCap))) : 0;
