@@ -38,5 +38,10 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL(safeNext, origin));
+  const destination = new URL(safeNext, origin);
+  const hasSignupIntent = request.headers.get("cookie")?.includes("reviewiq_signup_intent=1");
+  if (safeNext === "/review" && hasSignupIntent) destination.searchParams.set("welcome", "1");
+  const response = NextResponse.redirect(destination);
+  if (hasSignupIntent) response.cookies.delete("reviewiq_signup_intent");
+  return response;
 }

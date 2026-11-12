@@ -47,6 +47,10 @@ export default function LoginForm({ initialMode, returnTo, authError = false }: 
 
   async function continueWithGoogle() {
     markSignupStarted();
+    if (isSignUp) {
+      sessionStorage.setItem("reviewiq:new-signup", "1");
+      document.cookie = "reviewiq_signup_intent=1; path=/; max-age=600; samesite=lax";
+    }
     setLoading(true); setError(""); setMessage("");
     const next = returnTo || "/review";
     const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
@@ -83,6 +87,7 @@ export default function LoginForm({ initialMode, returnTo, authError = false }: 
         : undefined;
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
       if (signUpError) { recordGuestAuthFailure("email_signup_failed"); setError(signUpError.message); setLoading(false); return; }
+      document.cookie = "reviewiq_signup_intent=1; path=/; max-age=604800; samesite=lax";
       if (!data.session) {
         setMessage("Your account is ready. Check your email to confirm it, then sign in to start your first review.");
         setLoading(false); setIsSignUp(false);
@@ -91,7 +96,10 @@ export default function LoginForm({ initialMode, returnTo, authError = false }: 
       }
       if (data.user) identifyProductUser(data.user.id, data.user.created_at, data.user.email_confirmed_at || data.user.confirmed_at || undefined, returnTo === "/guest/claim");
       if (returnTo === "/api/checkout") window.location.assign(returnTo);
-      else router.push(returnTo || "/review");
+      else {
+        sessionStorage.setItem("reviewiq:new-signup", "1");
+        router.push(returnTo || "/review");
+      }
       return;
     }
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });

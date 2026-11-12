@@ -71,7 +71,15 @@ export default function ReviewPage() {
   const [generateError, setGenerateError] = useState("");
   const [outOfCredits, setOutOfCredits] = useState(false);
   const [gradeError, setGradeError] = useState("");
+  const [showWelcome, setShowWelcome] = useState(false);
 
+
+  useEffect(() => {
+    if (sessionStorage.getItem("reviewiq:new-signup") === "1") {
+      sessionStorage.removeItem("reviewiq:new-signup");
+      setShowWelcome(true);
+    }
+  }, []);
 
   useEffect(() => {
     fetch("/api/credits")
@@ -238,6 +246,8 @@ export default function ReviewPage() {
   return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-[#101418] text-[#f4f5f6] lg:h-screen lg:min-h-0">
       <ProductHeader active="review" />
+
+      {showWelcome && <section role="status" className="flex flex-wrap items-center justify-between gap-4 border-b border-[#ff806a55] bg-[#ff806a14] px-5 py-4 sm:px-7"><div><h1 className="text-[15px] font-semibold text-white">Your 5 free credits are limited time.</h1><p className="mt-1 text-[12px] leading-5 text-[#c5cdd1]">Use them before they expire. Start your first review now and see what you catch and what you miss.</p></div><button onClick={() => {setShowWelcome(false); void handleGenerate();}} className="rounded-md bg-[#ff806a] px-4 py-2.5 text-[12px] font-bold text-[#201715] hover:bg-[#ff9a87]">Use my first credit</button></section>}
 
       {!grade && <section className="flex flex-wrap items-center justify-between gap-4 border-b border-[#273039] bg-[#14191e] px-5 py-3 sm:px-7">
         <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
